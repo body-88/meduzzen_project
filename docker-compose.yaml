@@ -1,0 +1,29 @@
+version: '3.9'
+
+services:
+  web:
+    env_file: .env
+    build: .
+    ports:
+      - "80:80"
+    command: uvicorn app.main:app --host 0.0.0.0 --port 80
+    volumes:
+      - .:/code
+    depends_on:
+      - db
+      - redis
+    restart: always
+  
+  db:
+    image: postgres:13-alpine
+    env_file: .env
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    ports:
+      - "5452:5432"
+  
+  redis:
+    image: "redis:alpine"
+
+volumes:
+  db-data:
