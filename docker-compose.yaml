@@ -6,7 +6,7 @@ services:
     build: .
     ports:
       - "80:80"
-    command: uvicorn app.main:app --host 0.0.0.0 --port 80
+    command: python app/runserver.py  
     volumes:
       - .:/code
     depends_on:
@@ -20,7 +20,7 @@ services:
     volumes:
       - db-data:/var/lib/postgresql/data
     ports:
-      - "5452:5432"
+      - "${DB_PORT}:${CONTAINER_DB_PORT}"
   
   redis:
     image: "redis:alpine"
