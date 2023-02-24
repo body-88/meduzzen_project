@@ -5,8 +5,7 @@ services:
     env_file: .env
     build: .
     ports:
-      - "80:80"
-    command: python app/runserver.py  
+      - "${APP_PORT}:${APP_PORT}"
     volumes:
       - .:/code
     depends_on:
