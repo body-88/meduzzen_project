@@ -1,0 +1,28 @@
+version: '3.9'
+
+services:
+  web:
+    env_file: .env
+    build: .
+    ports:
+      - "${APP_PORT}:${APP_PORT}"
+    volumes:
+      - .:/code
+    depends_on:
+      - db
+      - redis
+    restart: always
+  
+  db:
+    image: postgres:13-alpine
+    env_file: .env
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    ports:
+      - "${DB_PORT}:${CONTAINER_DB_PORT}"
+  
+  redis:
+    image: "redis:alpine"
+
+volumes:
+  db-data:

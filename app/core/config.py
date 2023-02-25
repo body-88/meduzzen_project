@@ -1,8 +1,14 @@
 from pydantic import BaseSettings
 
 class Settings(BaseSettings):
-    SERVER_HOST: str = "127.0.0.1"
-    SERVER_PORT: int = 8000
+    SERVER_HOST: str 
+    SERVER_PORT: int 
+    POSTGRES_USER: str
+    POSTGRES_PASSWORD: str
+    POSTGRES_DB: str
+    POSTGRES_HOST: str
+    CONTAINER_DB_PORT: str
+    REDIS_URL: str
     
     class Config:
         env_file = ".env"
