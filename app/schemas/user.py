@@ -1,23 +1,56 @@
 from typing import List, Optional
-from pydantic import BaseModel
+from pydantic import BaseModel, SecretStr
 from models.user import User
+from datetime import datetime
 
-class SignInRequest(BaseModel):
+
+class CustomBaseModel(BaseModel):
+    class Config:
+        allow_population_by_field_name = True
+        orm_mode = True
+
+class UserBase(CustomBaseModel):
+    id: int
     email: str
-    password: str
+    password: SecretStr
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    status: Optional[bool] = None
+    created_at: datetime
+    updated_at: datetime
+    description: Optional[str] = None
 
 
-class SignUpRequest(BaseModel):
+class SignInRequest(UserBase):
     email: str
-    password: str
-    full_name: Optional[str]
+    password: SecretStr
+    
+
+class SignUpRequest(UserBase):
+    email: str
+    password: SecretStr
+    first_name: Optional[str]
+    last_name: Optional[str] 
+    
+
+class UserUpdateRequest(UserBase):
+    password: SecretStr
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    status: Optional[bool] = None
+    description: Optional[str] = None
 
 
-class UserUpdateRequest(BaseModel):
-    email: Optional[str]
-    password: Optional[str]
-    full_name: Optional[str]
-
-
-class UsersListResponse(BaseModel):
+class UsersListResponse(UserBase):
     users: List[User]
+
+
+class UserResponse(UserBase):
+    id: int
+    email: str
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    status: Optional[bool] = None
+    created_at: datetime
+    updated_at: datetime
+    description: Optional[str] = None

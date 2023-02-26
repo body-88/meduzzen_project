@@ -2,7 +2,7 @@ import databases
 import aioredis
 from core.config import settings
 
-DATABASE_URL = f"postgresql+asyncpg://{settings.POSTGRES_USER}:{settings.POSTGRES_PASSWORD}@{settings.POSTGRES_HOST}:{settings.CONTAINER_DB_PORT}/{settings.POSTGRES_DB}"
+DATABASE_URL = f"postgresql://{settings.POSTGRES_USER}:{settings.POSTGRES_PASSWORD}@{settings.POSTGRES_HOST}:{settings.CONTAINER_DB_PORT}/{settings.POSTGRES_DB}"
 
 database = databases.Database(DATABASE_URL)
 

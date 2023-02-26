@@ -1,6 +1,18 @@
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi import FastAPI
-from db.database import database
+from db.db_settings import database
+
+from logging.config import dictConfig
+import logging
+from utils.log_conf import LogConfig 
+
+dictConfig(LogConfig().dict())
+logger = logging.getLogger("app")
+
+logger.info("Dummy Info")
+logger.error("Dummy Error")
+logger.debug("Dummy Debug")
+logger.warning("Dummy Warning")
 
 app = FastAPI()
 
