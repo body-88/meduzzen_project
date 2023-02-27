@@ -42,6 +42,9 @@ class UserUpdateRequest(UserBase):
 
 class UserId(UserBase):
     id: int
+    email: str
+    first_name: Optional[str]
+    last_name: Optional[str]
 
 
 class UsersListResponse(UserBase):
