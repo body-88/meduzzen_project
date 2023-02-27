@@ -1,6 +1,5 @@
 from typing import List, Optional
 from pydantic import BaseModel, SecretStr
-from models.user import User
 from datetime import datetime
 
 
@@ -41,8 +40,12 @@ class UserUpdateRequest(UserBase):
     description: Optional[str] = None
 
 
+class UserId(UserBase):
+    id: int
+
+
 class UsersListResponse(UserBase):
-    users: List[User]
+    users: List[UserId]
 
 
 class UserResponse(UserBase):
