@@ -3,12 +3,7 @@ from pydantic import BaseModel, SecretStr
 from datetime import datetime
 
 
-class CustomBaseModel(BaseModel):
-    class Config:
-        allow_population_by_field_name = True
-        orm_mode = True
-
-class UserBase(CustomBaseModel):
+class UserBase(BaseModel):
     id: int
     email: str
     password: SecretStr
@@ -20,19 +15,19 @@ class UserBase(CustomBaseModel):
     description: Optional[str] = None
 
 
-class SignInRequest(UserBase):
+class SignInRequest(BaseModel):
     email: str
     password: SecretStr
     
 
-class SignUpRequest(UserBase):
+class SignUpRequest(BaseModel):
     email: str
     password: SecretStr
     first_name: Optional[str]
     last_name: Optional[str] 
     
 
-class UserUpdateRequest(UserBase):
+class UserUpdateRequest(BaseModel):
     password: SecretStr
     first_name: Optional[str] = None
     last_name: Optional[str] = None
@@ -40,18 +35,18 @@ class UserUpdateRequest(UserBase):
     description: Optional[str] = None
 
 
-class UserId(UserBase):
+class UserId(BaseModel):
     id: int
     email: str
     first_name: Optional[str]
     last_name: Optional[str]
 
 
-class UsersListResponse(UserBase):
+class UsersListResponse(BaseModel):
     users: List[UserId]
 
 
-class UserResponse(UserBase):
+class UserResponse(BaseModel):
     id: int
     email: str
     first_name: Optional[str] = None
