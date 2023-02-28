@@ -5,6 +5,7 @@ from db.db_settings import get_db
 from logging.config import dictConfig
 import logging
 from utils.log_conf import LogConfig 
+from api.api import api_router
 
 dictConfig(LogConfig().dict())
 logger = logging.getLogger("app")
@@ -53,3 +54,4 @@ def health_check():
 }
 
 
+app.include_router(api_router)
