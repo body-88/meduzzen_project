@@ -11,3 +11,9 @@ Steps to run docker container:
 1. Create docker image `docker build -t <your docker image name> .`
 2. To run docker container use `docker run -d --name <your docker container name> -p 80:80 <your docker image name>`
 3. To run tests inside docker you can use `docker exec -it <your docker container name> python -m pytest`
+
+
+
+Steps to create and apply migrations:
+1. Command to create migration `docker-compose run --rm <name of docker-compose service> alembic revision --autogenerate -m "<your message>"`
+2. To apply migration to database `docker-compose run --rm web alembic upgrade head`

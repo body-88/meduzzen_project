@@ -1,17 +1,31 @@
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi import FastAPI
-from db.database import database
+from db.db_settings import get_db
+
+from logging.config import dictConfig
+import logging
+from utils.log_conf import LogConfig 
+
+dictConfig(LogConfig().dict())
+logger = logging.getLogger("app")
+
+logger.info("Dummy Info")
+logger.error("Dummy Error")
+logger.debug("Dummy Debug")
+logger.warning("Dummy Warning")
 
 app = FastAPI()
 
 
 @app.on_event("startup")
 async def startup():
-    await database.connect()
+    db = await get_db()
+    await db.connect()
 
 @app.on_event("shutdown")
 async def shutdown():
-    await database.disconnect()
+    db = await get_db()
+    await db.disconnect()
 
 origins = [
     "http://localhost",
