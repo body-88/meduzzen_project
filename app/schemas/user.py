@@ -1,5 +1,5 @@
 from typing import List, Optional
-from pydantic import BaseModel, SecretStr
+from pydantic import BaseModel
 from datetime import datetime
 
 
@@ -8,55 +8,55 @@ class CustomBaseModel(BaseModel):
         allow_population_by_field_name = True
         orm_mode = True
 
-class UserBase(CustomBaseModel):
+class UserBase(BaseModel):
     id: int
     email: str
-    password: SecretStr
+    password: str
     first_name: Optional[str] = None
     last_name: Optional[str] = None
-    status: Optional[bool] = None
+    status: bool
     created_at: datetime
     updated_at: datetime
     description: Optional[str] = None
 
 
-class SignInRequest(UserBase):
+class SignInRequest(BaseModel):
     email: str
-    password: SecretStr
+    password: str
     
 
-class SignUpRequest(UserBase):
+class SignUpRequest(BaseModel):
     email: str
-    password: SecretStr
+    password: str
     first_name: Optional[str]
-    last_name: Optional[str] 
+    last_name: Optional[str]
+    
     
 
-class UserUpdateRequest(UserBase):
-    password: SecretStr
+class UserUpdateRequest(BaseModel):
+    password: str
     first_name: Optional[str] = None
     last_name: Optional[str] = None
-    status: Optional[bool] = None
+    status: bool
     description: Optional[str] = None
 
 
-class UserId(UserBase):
+class UserInfo(BaseModel):
     id: int
     email: str
     first_name: Optional[str]
     last_name: Optional[str]
 
 
-class UsersListResponse(UserBase):
-    users: List[UserId]
+class UsersListResponse(BaseModel):
+    users: List[UserInfo]
 
-
-class UserResponse(UserBase):
+class UserResponse(BaseModel):
     id: int
     email: str
     first_name: Optional[str] = None
     last_name: Optional[str] = None
-    status: Optional[bool] = None
-    created_at: datetime
-    updated_at: datetime
+    status: bool
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
     description: Optional[str] = None

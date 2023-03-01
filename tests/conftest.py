@@ -13,11 +13,11 @@ from app.main import app
 #import your metadata
 from app.db.base_class import Base
 #import your test urls for db
-from app.core.config import settings
+from app.db.db_settings import TEST_DB_URL
 #import your get_db func
 from app.db.db_settings import get_db
 
-test_db: Database = Database(system_config.db_url_test, force_rollback=True)
+test_db: Database = Database(TEST_DB_URL, force_rollback=True)
 
 
 def override_get_db() -> Database:
@@ -27,7 +27,7 @@ def override_get_db() -> Database:
 app.dependency_overrides[get_db] = override_get_db
 
 
-engine_test = create_async_engine(system_config.db_url_test, poolclass=NullPool)
+engine_test = create_async_engine(TEST_DB_URL, poolclass=NullPool)
 
 
 @pytest.fixture(scope="session")
