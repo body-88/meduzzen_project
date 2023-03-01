@@ -3,11 +3,6 @@ from pydantic import BaseModel
 from datetime import datetime
 
 
-class CustomBaseModel(BaseModel):
-    class Config:
-        allow_population_by_field_name = True
-        orm_mode = True
-
 class UserBase(BaseModel):
     id: int
     email: str
@@ -41,6 +36,7 @@ class UserUpdateRequest(BaseModel):
     description: Optional[str] = None
 
 
+
 class UserInfo(BaseModel):
     id: int
     email: str
@@ -50,6 +46,7 @@ class UserInfo(BaseModel):
 
 class UsersListResponse(BaseModel):
     users: List[UserInfo]
+
 
 class UserResponse(BaseModel):
     id: int
