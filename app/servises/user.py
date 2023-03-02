@@ -4,7 +4,9 @@ from app.schemas.user import SignUpRequest, UserUpdateRequest
 from sqlalchemy import update, delete, select, insert
 from app.db.db_settings import get_db
 from fastapi import Depends, HTTPException
+from passlib.context import CryptContext
 
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 class UserService:
     def __init__(self, db: Database):
@@ -17,18 +19,17 @@ class UserService:
     
     
     async def create_user(self, user: SignUpRequest):
+        hashed_password = pwd_context.hash(user.password)
         existing_user = await self.get_user_by_email(email=user.email)
         if existing_user is not None:
             raise HTTPException(status_code=400, detail="Email already registered")
-        
         query = insert(User).values(
             email=user.email,
-            password=user.password,
+            password=hashed_password,
             first_name=user.first_name,
             last_name=user.last_name,
             status=True,
         ).returning(User.id, User.email, User.first_name, User.last_name, User.status, User.created_at)
-        
         result = await self.db.fetch_one(query=query)
         return result
     

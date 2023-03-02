@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 
 from app.schemas.user import SignUpRequest, UserResponse, UserUpdateRequest, UsersListResponse
 from app.models.user import User
@@ -14,11 +14,9 @@ async def create_user(user: SignUpRequest, service: UserService = Depends(get_us
     return result
 
 
-@router.get("/{user_id}", response_model=UserResponse, status_code=200)
+@router.get("/{user_id}", response_model=UserResponse, status_code=200, response_description="User returned")
 async def read_user(user_id: int, service: UserService = Depends(get_user_service)) -> UserResponse:
     db_user = await service.get_user(user_id=user_id)
-    if db_user is None:
-        raise HTTPException(status_code=404, detail="User not found")
     return db_user
 
 
@@ -32,13 +30,11 @@ async def update_user(user_id: int, user_info: UserUpdateRequest, service: UserS
 @router.delete("/{user_id}", status_code=200)
 async def delete_user(user_id: int, service: UserService = Depends(get_user_service)) -> dict:
     db_user = await service.get_user(user_id=user_id)
-    if db_user is None:
-        raise HTTPException(status_code=404, detail="User not found")
     db_user = await service.delete_user(user_id=user_id)
     return {"message" : "User deleted successfully"}
 
 
-@router.get("/", response_model=UsersListResponse, status_code=200, response_description="Users")
+@router.get("/", response_model=UsersListResponse, status_code=200, response_description="Users returned")
 async def read_users(service: UserService = Depends(get_user_service)) -> UsersListResponse:
     users = await service.get_users()
     return {"users": users}
