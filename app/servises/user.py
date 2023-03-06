@@ -6,8 +6,8 @@ from app.db.db_settings import get_db
 from fastapi import Depends, HTTPException
 from passlib.context import CryptContext
 from typing import List, Optional
+from app.utils.hass_pass import get_hashed_password
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 class UserService:
     def __init__(self, db: Database):
@@ -20,7 +20,7 @@ class UserService:
     
     
     async def create_user(self, user: SignUpRequest)-> User:
-        hashed_password = pwd_context.hash(user.user_password)
+        hashed_password = get_hashed_password(user.user_password)
         existing_user = await self.get_user_by_email(email=user.user_email)
         if existing_user is not None:
             raise HTTPException(status_code=400, detail="Email already registered")
@@ -53,7 +53,7 @@ class UserService:
         if db_user is None:
             raise HTTPException(status_code=404, detail="User doesn't exist")
         if user.user_password:
-            hashed_password = pwd_context.hash(user.user_password)
+            hashed_password = get_hashed_password(user.user_password)
             user_dict = user.dict(exclude_unset=True, exclude={"user_password_repeat"})
             user_dict["user_password"] = hashed_password
         else:
