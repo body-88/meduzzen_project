@@ -1,10 +1,11 @@
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi import FastAPI
-from db.db_settings import get_db
+from app.db.db_settings import get_db
 
 from logging.config import dictConfig
 import logging
-from utils.log_conf import LogConfig 
+from app.utils.log_conf import LogConfig 
+from app.api.api import api_router
 
 dictConfig(LogConfig().dict())
 logger = logging.getLogger("app")
@@ -53,3 +54,4 @@ def health_check():
 }
 
 
+app.include_router(api_router)

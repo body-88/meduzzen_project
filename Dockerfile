@@ -8,4 +8,6 @@ RUN pip install --no-cache-dir --upgrade -r /code/requirements.txt
 
 COPY . .
 
+ENV PYTHONPATH "${PYTHONPATH}:/code"
+
 CMD python app/runserver.py
