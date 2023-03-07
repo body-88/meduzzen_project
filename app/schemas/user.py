@@ -33,6 +33,19 @@ class SignInRequest(BaseModel):
     user_password_repeat: str
 
 
+    @validator('user_password_repeat')
+    def passwords_match(cls, v, values, **kwargs):
+        if 'user_password' in values and v != values['user_password']:
+            raise ValueError('passwords do not match')
+        return v
+    
+    @validator('user_password')
+    def validate_password(cls, v):
+        if len(v) < 4:
+            raise HTTPException(status_code=422, detail="Password must be at least 4 characters long")
+        return v
+    
+    
 class SignUpRequest(BaseModel):
     user_email: str
     user_password: str
