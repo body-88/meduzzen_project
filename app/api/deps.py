@@ -1,7 +1,5 @@
-from typing import Union, Any
 from datetime import datetime
 from fastapi import Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer
 from app.core.config import settings
 from app.servises.user import get_user_service, UserService
 
@@ -9,16 +7,13 @@ from jose import jwt
 from pydantic import ValidationError
 from app.schemas.user import UserResponse
 from app.schemas.auth import TokenPayload
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
+http_bearer = HTTPBearer()
 
-reuseable_oauth = OAuth2PasswordBearer(
-    tokenUrl="/user/login",
-    scheme_name="JWT"
-)
-
-async def get_current_user(token: str = Depends(reuseable_oauth), service: UserService = Depends(get_user_service), ) -> UserResponse:
+async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(http_bearer), service: UserService = Depends(get_user_service), ) -> UserResponse:
     try:
-        payload = jwt.decode(token, settings.JWT_SECRET_KEY, algorithms=[settings.ALGORITHM])
+        payload = jwt.decode(credentials.credentials, settings.JWT_SECRET_KEY, algorithms=[settings.ALGORITHM])
         token_data = TokenPayload(**payload)
         
         if datetime.fromtimestamp(token_data.exp) < datetime.now():
@@ -34,7 +29,7 @@ async def get_current_user(token: str = Depends(reuseable_oauth), service: UserS
             headers={"WWW-Authenticate": "Bearer"},
         )
         
-    user: Union[dict[str, Any], None] = await service.get_user(user_id = int(token_data.sub))
+    user = await service.get_user(user_id = int(token_data.sub))
     
     
     if user is None:
