@@ -1,0 +1,7 @@
+# .config
+ 
+[AUTH0]
+DOMAIN = your.domain.auth0.com
+API_AUDIENCE = your.api.audience
+ALGORITHMS = RS256
+ISSUER = https://your.domain.auth0.com/

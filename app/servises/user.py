@@ -1,6 +1,6 @@
 from databases import Database
 from app.models.user import User
-from app.schemas.user import SignUpRequest, UserUpdateRequest, UserBase
+from app.schemas.user import SignUpRequest, UserUpdateRequest, UserMe
 from sqlalchemy import update, delete, select, insert
 from app.db.db_settings import get_db
 from fastapi import Depends, HTTPException
@@ -14,7 +14,7 @@ class UserService:
         self.db = db
 
 
-    async def get_user_by_email(self, email: str) -> Optional[UserBase]:
+    async def get_user_by_email(self, email: str) -> Optional[UserMe]:
         query = select(User).where(User.user_email == email)
         return await self.db.fetch_one(query=query)
     
@@ -73,6 +73,18 @@ class UserService:
         query = delete(User).where(User.id == user_id)
         obj = await self.db.execute(query=query)
         return obj
+    
+    async def create_user_auth0(self, user_dict) -> User:
+        hashed_password = get_hashed_password(user_dict['user_password'])
+        query= insert(User).values(
+            user_email = user_dict['user_email'],
+            user_password = hashed_password,
+            user_name = user_dict['user_name'],
+            status = True,            
+        ).returning(User.id.label('user_id'), User.user_email, User.user_name, User.status, User.created_at)
+        result = await self.db.fetch_one(query=query)
+        return result
+    
 
 
 async def get_user_service(db: Database = Depends(get_db)) -> UserService:

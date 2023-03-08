@@ -115,3 +115,12 @@ class UserResponse(BaseModel):
 
     class Config:
         orm_mode = True
+        
+        
+class UserMe(BaseModel):
+    user_email: str
+    user_name: Optional[str]
+    status: bool
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+    description: Optional[str] = None

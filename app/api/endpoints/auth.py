@@ -1,5 +1,5 @@
 from fastapi import status, HTTPException, Depends, APIRouter
-from app.schemas.user import SignInRequest, UserResponse
+from app.schemas.user import SignInRequest, UserMe
 from app.schemas.auth import TokenSchema
 from app.utils.hass_pass import verify_password
 from app.servises.jwt_service import create_access_token, create_refresh_token
@@ -27,12 +27,12 @@ async def login(form_data: SignInRequest = Depends(), service: UserService = Dep
         )
     
     return {
-        "access_token": create_access_token(user['id']),
-        "refresh_token": create_refresh_token(user['id']),
+        "access_token": create_access_token(user['user_email']),
+        "refresh_token": create_refresh_token(user['user_email']),
     }
     
 
 
-@router.get('/me', summary='Get details of currently logged in user', response_model=UserResponse)
+@router.get('/me', summary='Get details of currently logged in user', response_model=UserMe)
 async def get_me(user = Depends(get_current_user)):
     return user
