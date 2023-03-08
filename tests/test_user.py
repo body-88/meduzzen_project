@@ -7,7 +7,7 @@ async def test_get_users(ac: AsyncClient):
     assert response.json().get("result").get("users") == []
 
 
-async def test_bad_create_user_not_passord(ac: AsyncClient):
+async def test_bad_create_user_not_password(ac: AsyncClient):
     payload = {
       "user_password": "",
       "user_password_repeat": "",
@@ -18,7 +18,7 @@ async def test_bad_create_user_not_passord(ac: AsyncClient):
     assert response.status_code == 422
 
 
-async def test_bad_create_user_low_passord(ac: AsyncClient):
+async def test_bad_create_user_low_password(ac: AsyncClient):
     payload = {
       "user_password": "tet",
       "user_password_repeat": "tet",
@@ -151,3 +151,48 @@ async def test_get_users_list_after_delete(ac: AsyncClient):
     response = await ac.get("/users")
     assert response.status_code == 200
     assert len(response.json().get("result").get("users")) == 2
+
+
+async def test_bad_login_try(ac: AsyncClient):
+    payload = {
+        "user_email": "test2@test.com",
+        "user_password": "tess",
+    }
+    response = await ac.post("/auth/login", json=payload)
+    assert response.status_code == 401
+    assert response.json().get('detail') == 'Incorrect username or password'
+
+
+tokens = {
+    "user_two": ""
+}
+
+
+async def test_login_try(ac: AsyncClient):
+    payload = {
+        "user_email": "test2@test.com",
+        "user_password": "testt",
+    }
+    response = await ac.post("/auth/login", json=payload)
+    tokens["user_two"] = response.json().get('result').get('access_token')
+    assert response.status_code == 200
+    assert response.json().get('result').get('token_type') == 'Bearer'
+
+
+async def test_auth_me(ac: AsyncClient):
+    headers = {
+        "Authorization": f"Bearer {tokens.get('user_two')}",
+    }
+    response = await ac.get("/auth/me", headers=headers)
+    assert response.status_code == 200
+    assert response.json().get('result').get('user_name') == "test2"
+    assert response.json().get('result').get('user_email') == "test2@test.com"
+    assert response.json().get('result').get('user_id') == 2
+
+
+async def test_bad_auth_me(ac: AsyncClient):
+    headers = {
+        "Authorization": f"Bearer test",
+    }
+    response = await ac.get("/auth/me", headers=headers)
+    assert response.status_code == 401

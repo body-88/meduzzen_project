@@ -5,13 +5,17 @@ from app.servises.user import get_user_service, UserService
 from app.utils.auth0 import VerifyToken
 from jose import jwt
 from pydantic import ValidationError
-from app.schemas.user import UserMe
+from app.schemas.user import UserResponse, SignUpRequest
 from app.schemas.auth import TokenPayload
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from typing import Optional
+
+
 http_bearer = HTTPBearer()
 
-async def get_current_user(token: Optional[HTTPAuthorizationCredentials] = Depends(http_bearer), service: UserService = Depends(get_user_service), ) -> Optional[UserMe]:
+
+async def get_current_user(token: Optional[HTTPAuthorizationCredentials] = Depends(http_bearer),
+                        service: UserService = Depends(get_user_service), ) -> Optional[UserResponse]:
     if token is None:
         return None
 
@@ -33,7 +37,7 @@ async def get_current_user(token: Optional[HTTPAuthorizationCredentials] = Depen
                 detail="Could not find user",
             )
     
-        return UserMe(**user)
+        return UserResponse(**user)
     
     except (jwt.JWTError, ValidationError):
         pass
@@ -51,20 +55,22 @@ async def get_current_user(token: Optional[HTTPAuthorizationCredentials] = Depen
         user = await service.get_user_by_email(email = payload["sub"])
         
         if user is None:
-            user_dict={
+            user_dict = {
                 "user_email" : payload["sub"],
                 "user_password" : payload["sub"],
+                "user_password_repeat": payload["sub"],
                 "user_name" : payload["sub"]
             }
-            user = await service.create_user_auth0(user_dict=user_dict)
+            
+            user = await service.create_user(user=SignUpRequest(**user_dict))
         
-        return UserMe(**user)
+        return UserResponse(**user)
     
     except Exception:
         pass
 
     raise HTTPException(
-        status_code=status.HTTP_403_FORBIDDEN,
+        status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
         headers={"WWW-Authenticate": "Bearer"},
     )
