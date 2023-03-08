@@ -55,14 +55,13 @@ async def get_current_user(token: Optional[HTTPAuthorizationCredentials] = Depen
         user = await service.get_user_by_email(email = payload["sub"])
         
         if user is None:
-            user_dict = {
-                "user_email" : payload["sub"],
-                "user_password" : payload["sub"],
-                "user_password_repeat": payload["sub"],
-                "user_name" : payload["sub"]
-            }
-            
-            user = await service.create_user(user=SignUpRequest(**user_dict))
+            user = SignUpRequest(
+                user_email=payload.get('sub'),
+                user_password=payload.get('sub'),
+                user_password_repeat=payload.get('sub'),
+                user_name=payload.get('sub')
+            )
+            user = await service.create_user(user=user)
         
         return UserResponse(**user)
     

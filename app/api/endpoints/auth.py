@@ -25,10 +25,9 @@ async def login(form_data: SignInRequest, service: UserService = Depends(get_use
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect username or password"
         )
-    
     result = {
-        "access_token": create_access_token(user['user_email']),
-        "refresh_token": create_refresh_token(user['user_email']),
+        "access_token": create_access_token(user.user_email),
+        "refresh_token": create_refresh_token(user.user_email),
         "token_type": "Bearer"
     }
     return Result[TokenSchema](result=result)
