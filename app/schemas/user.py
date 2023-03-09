@@ -30,7 +30,6 @@ class UserBase(BaseModel):
 class SignInRequest(BaseModel):
     user_email: str
     user_password: str
-    user_password_repeat: str
 
 
 class SignUpRequest(BaseModel):

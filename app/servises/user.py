@@ -1,10 +1,9 @@
 from databases import Database
 from app.models.user import User
-from app.schemas.user import SignUpRequest, UserUpdateRequest, UserBase
+from app.schemas.user import SignUpRequest, UserUpdateRequest, UserResponse
 from sqlalchemy import update, delete, select, insert
 from app.db.db_settings import get_db
 from fastapi import Depends, HTTPException
-from passlib.context import CryptContext
 from typing import List, Optional
 from app.utils.hass_pass import get_hashed_password
 
@@ -14,8 +13,9 @@ class UserService:
         self.db = db
 
 
-    async def get_user_by_email(self, email: str) -> Optional[UserBase]:
+    async def get_user_by_email(self, email: str) -> Optional[UserResponse]:
         query = select(User).where(User.user_email == email)
+        query = query.add_columns(User.id.label('user_id'))
         return await self.db.fetch_one(query=query)
     
     
@@ -35,7 +35,8 @@ class UserService:
     
     
     async def get_user(self, user_id: int) -> User:
-        query = select(User.id.label('user_id'), User.user_name, User.user_email, User.status).where(User.id == user_id)
+        query = select(User).where(User.id == user_id)
+        query = query.add_columns(User.id.label('user_id'))
         user = await self.db.fetch_one(query=query)
         if user is None:
             raise HTTPException(status_code=404, detail="User doesn't exist")
