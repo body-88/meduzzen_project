@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends
 from app.schemas.company import CompanyBase, CompanyCreate, CompanyUpdate
 from app.schemas.user import Result, UserResponse
 from app.servises.company import CompanyService, get_company_service
@@ -14,7 +14,7 @@ async def create_company(company: CompanyCreate,
                     current_user: UserResponse = Depends(get_current_user)) -> Result[CompanyBase]:
     if not current_user:
         raise_not_authenticated()
-    db_company = await service.create_company(company=company, user_id = current_user.user_id)
+    db_company = await service.create_company(company=company, user_id=current_user.user_id)
     return Result(result=CompanyBase(**db_company))
 
 
@@ -28,7 +28,7 @@ async def read_companies(service: CompanyService = Depends(get_company_service),
 
 
 @router.get("/{company_id}", response_model=Result[CompanyBase], status_code=200, response_description="Company returned")
-async def read_company(company_id: int = Query(..., description="The ID of the company to retrieve"),
+async def read_company(company_id: int,
                     service: CompanyService = Depends(get_company_service),
                     current_user: UserResponse = Depends(get_current_user)) -> Result[CompanyBase]:
     if not current_user:
@@ -39,7 +39,7 @@ async def read_company(company_id: int = Query(..., description="The ID of the c
 
 @router.put("/{company_id}", response_model=Result[CompanyBase], status_code=200, response_description="Company updated")
 async def update_company(company: CompanyUpdate,
-                    company_id: int = Query(..., description="The ID of the user to update"),
+                    company_id: int,
                     service: CompanyService = Depends(get_company_service),
                     current_user: UserResponse = Depends(get_current_user)) -> Result[CompanyBase]:
     if not current_user:
@@ -50,10 +50,10 @@ async def update_company(company: CompanyUpdate,
 
 
 @router.delete("/{company_id}", status_code=200)
-async def delete_company(company_id: int = Query(..., description="The ID of the company to delete"),
+async def delete_company(company_id: int,
                     service: CompanyService = Depends(get_company_service),
-                    current_user: UserResponse = Depends(get_current_user))-> Result:
+                    current_user: UserResponse = Depends(get_current_user)) -> Result:
     if not current_user:
         raise_not_authenticated()
-    db_user = await service.delete_company(company_id=company_id, current_user_id = current_user.user_id)
+    db_user = await service.delete_company(company_id=company_id, current_user_id=current_user.user_id)
     return Result(result=db_user, message="Company deleted successfully")

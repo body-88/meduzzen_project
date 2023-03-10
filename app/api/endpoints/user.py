@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends
 from app.schemas.user import SignUpRequest, UserResponse, UsersListResponse, UserUpdateRequest, Result, UserUpdateResponse
 from app.servises.user import UserService, get_user_service
 from app.api.deps import get_current_user
@@ -24,9 +24,8 @@ async def create_user(user: SignUpRequest,
     return Result(result=UserResponse(**db_user))
     
 
-
 @router.get("/{user_id}", response_model=Result[UserResponse], status_code=200, response_description="User returned")
-async def read_user(user_id: int = Query(..., description="The ID of the user to retrieve"),
+async def read_user(user_id: int,
                     service: UserService = Depends(get_user_service),
                     current_user: UserResponse = Depends(get_current_user)) -> Result[UserResponse]:
     if not current_user:
@@ -37,7 +36,7 @@ async def read_user(user_id: int = Query(..., description="The ID of the user to
 
 @router.put("/{user_id}", response_model=Result[UserUpdateResponse], status_code=200, response_description="User updated")
 async def update_user(user: UserUpdateRequest,
-                    user_id: int = Query(..., description="The ID of the user to update"),
+                    user_id: int,
                     service: UserService = Depends(get_user_service),
                     current_user: UserResponse = Depends(get_current_user)) -> Result[UserUpdateResponse]:
     if current_user.user_id != user_id:
@@ -47,7 +46,7 @@ async def update_user(user: UserUpdateRequest,
 
 
 @router.delete("/{user_id}", status_code=200)
-async def delete_user(user_id: int = Query(..., description="The ID of the user to delete"),
+async def delete_user(user_id: int,
                     service: UserService = Depends(get_user_service),
                     current_user: UserResponse = Depends(get_current_user))-> Result:
     if current_user.user_id != user_id:
