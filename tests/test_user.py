@@ -105,26 +105,15 @@ async def test_bad_login_try(ac: AsyncClient):
     assert response.json().get('detail') == 'Incorrect username or password'
 
 
-tokens = {
-    "user_one": "",
-    "user_two": ""
-}
-
-
-async def test_login_try(ac: AsyncClient):
-    payload = {
-        "user_email": "test2@test.com",
-        "user_password": "testt",
-    }
-    response = await ac.post("/auth/login", json=payload)
-    tokens["user_two"] = response.json().get('result').get('access_token')
+async def test_login_try(ac: AsyncClient, login_user):
+    response = await login_user("test2@test.com", "testt")
     assert response.status_code == 200
     assert response.json().get('result').get('token_type') == 'Bearer'
 
 
-async def test_auth_me(ac: AsyncClient):
+async def test_auth_me(ac: AsyncClient, users_tokens):
     headers = {
-        "Authorization": f"Bearer {tokens.get('user_two')}",
+        "Authorization": f"Bearer {users_tokens['test2@test.com']}"
     }
     response = await ac.get("/auth/me", headers=headers)
     assert response.status_code == 200
@@ -144,9 +133,9 @@ async def test_bad_auth_me(ac: AsyncClient):
 # =====================================================
 
 
-async def test_get_users_list(ac: AsyncClient):
+async def test_get_users_list(ac: AsyncClient, users_tokens):
     headers = {
-        "Authorization": f"Bearer {tokens.get('user_two')}",
+        "Authorization": f"Bearer {users_tokens['test2@test.com']}"
     }
     response = await ac.get("/users", headers=headers)
     assert response.status_code == 200
@@ -158,9 +147,9 @@ async def test_get_users_list_unauth(ac: AsyncClient):
     assert response.status_code == 403
 
 
-async def test_get_user_by_id(ac: AsyncClient):
+async def test_get_user_by_id(ac: AsyncClient, users_tokens):
     headers = {
-        "Authorization": f"Bearer {tokens.get('user_two')}",
+        "Authorization": f"Bearer {users_tokens['test2@test.com']}"
     }
     response = await ac.get("/user?user_id=1", headers=headers)
     assert response.status_code == 200
@@ -174,41 +163,41 @@ async def test_get_user_by_id_unauth(ac: AsyncClient):
     assert response.status_code == 403
 
 
-async def test_bad_get_user_by_id(ac: AsyncClient):
+async def test_bad_get_user_by_id(ac: AsyncClient, users_tokens):
     headers = {
-        "Authorization": f"Bearer {tokens.get('user_two')}",
+        "Authorization": f"Bearer {users_tokens['test2@test.com']}"
     }
     response = await ac.get("/user?user_id=4", headers=headers)
     assert response.status_code == 404
 
 
-async def test_update_user_one_bad(ac: AsyncClient):
+async def test_update_user_one_bad(ac: AsyncClient, users_tokens):
     payload = {
       "user_name": "test1NEW",
     }
     headers = {
-        "Authorization": f"Bearer {tokens.get('user_two')}",
+        "Authorization": f"Bearer {users_tokens['test2@test.com']}"
     }
     response = await ac.put("/user?user_id=1", json=payload, headers=headers)
     assert response.status_code == 403
     assert response.json().get("detail") == "It's not your account"
 
 
-async def test_update_user_one_good(ac: AsyncClient):
+async def test_update_user_one_good(ac: AsyncClient, users_tokens):
     payload = {
       "user_name": "test2NEW",
     }
     headers = {
-        "Authorization": f"Bearer {tokens.get('user_two')}",
+        "Authorization": f"Bearer {users_tokens['test2@test.com']}"
     }
     response = await ac.put("/user?user_id=2", json=payload, headers=headers)
     assert response.status_code == 200
     assert response.json().get("result").get("user_id") == 2
 
 
-async def test_get_user_by_id_updates(ac: AsyncClient):
+async def test_get_user_by_id_updates(ac: AsyncClient, users_tokens):
     headers = {
-        "Authorization": f"Bearer {tokens.get('user_two')}",
+        "Authorization": f"Bearer {users_tokens['test2@test.com']}"
     }
     response = await ac.get("/user?user_id=2", headers=headers)
     assert response.status_code == 200
@@ -217,37 +206,32 @@ async def test_get_user_by_id_updates(ac: AsyncClient):
     assert response.json().get("result").get("user_name") == 'test2NEW'
 
 
-async def test_delete_user_one_bad(ac: AsyncClient):
+async def test_delete_user_one_bad(ac: AsyncClient, users_tokens):
     headers = {
-        "Authorization": f"Bearer {tokens.get('user_two')}",
+        "Authorization": f"Bearer {users_tokens['test2@test.com']}"
     }
     response = await ac.delete("/user?user_id=1", headers=headers)
     assert response.status_code == 403
     assert response.json().get("detail") == "It's not your account"
 
 
-async def test_delete_user_one_good(ac: AsyncClient):
+async def test_delete_user_one_good(ac: AsyncClient, users_tokens):
     headers = {
-        "Authorization": f"Bearer {tokens.get('user_two')}",
+        "Authorization": f"Bearer {users_tokens['test2@test.com']}"
     }
     response = await ac.delete("/user?user_id=2", headers=headers)
     assert response.status_code == 200
 
 
-async def test_login_user_one_(ac: AsyncClient):
-    payload = {
-        "user_email": "test1@test.com",
-        "user_password": "testt",
-    }
-    response = await ac.post("/auth/login", json=payload)
-    tokens["user_one"] = response.json().get('result').get('access_token')
+async def test_login_user_one(ac: AsyncClient, login_user):
+    response = await login_user("test1@test.com", "testt")
     assert response.status_code == 200
     assert response.json().get('result').get('token_type') == 'Bearer'
 
 
-async def test_get_users_list_after_delete(ac: AsyncClient):
+async def test_get_users_list_after_delete(ac: AsyncClient, users_tokens):
     headers = {
-        "Authorization": f"Bearer {tokens.get('user_one')}",
+        "Authorization": f"Bearer {users_tokens['test1@test.com']}"
     }
     response = await ac.get("/users", headers=headers)
     assert response.status_code == 200
