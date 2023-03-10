@@ -25,7 +25,7 @@ async def create_user(user: SignUpRequest,
     
 
 
-@router.get("", response_model=Result[UserResponse], status_code=200, response_description="User returned")
+@router.get("/{user_id}", response_model=Result[UserResponse], status_code=200, response_description="User returned")
 async def read_user(user_id: int = Query(..., description="The ID of the user to retrieve"),
                     service: UserService = Depends(get_user_service),
                     current_user: UserResponse = Depends(get_current_user)) -> Result[UserResponse]:
@@ -35,7 +35,7 @@ async def read_user(user_id: int = Query(..., description="The ID of the user to
     return Result[UserResponse](result=db_user)
 
 
-@router.put("", response_model=Result[UserUpdateResponse], status_code=200, response_description="User updated")
+@router.put("/{user_id}", response_model=Result[UserUpdateResponse], status_code=200, response_description="User updated")
 async def update_user(user: UserUpdateRequest,
                     user_id: int = Query(..., description="The ID of the user to update"),
                     service: UserService = Depends(get_user_service),
@@ -46,7 +46,7 @@ async def update_user(user: UserUpdateRequest,
     return Result[UserUpdateResponse](result=db_user, message="User has been updated")
 
 
-@router.delete("", status_code=200)
+@router.delete("/{user_id}", status_code=200)
 async def delete_user(user_id: int = Query(..., description="The ID of the user to delete"),
                     service: UserService = Depends(get_user_service),
                     current_user: UserResponse = Depends(get_current_user))-> Result:

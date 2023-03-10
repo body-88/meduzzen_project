@@ -1,12 +1,9 @@
 from databases import Database
 from app.models.company import Company
-from app.schemas.company import CompanyBase, CompanyCreate
+from app.schemas.company import CompanyBase, CompanyCreate, CompanyUpdate
 from sqlalchemy import update, delete, select, insert
 from app.db.db_settings import get_db
 from fastapi import Depends, HTTPException
-from typing import List, Optional
-from app.utils.hass_pass import get_hashed_password
-
 
 
 class CompanyService:
@@ -25,30 +22,34 @@ class CompanyService:
         return result
     
     
-    async def get_companies(self, skip: int = 0, limit: int = 100):
+    async def get_companies(self, current_user_id: int, skip: int = 0, limit: int = 100):
         query = select(Company).offset(skip).limit(limit)
-        result = await self.db.fetch_all(query=query)
-        return result
+        companies = await self.db.fetch_all(query=query)
+        filtered_result = []
+        for company in companies:
+            if company.hide_status and (current_user_id is None or current_user_id != company.company_owner_id):
+                continue
+            filtered_result.append(company)
+        return filtered_result
     
     
-    async def get_company(self, company_id: int) -> CompanyBase:
+    async def get_company(self, company_id: int, current_user_id: int) -> CompanyBase:
         query = select(Company).where(Company.company_id == company_id)
         company = await self.db.fetch_one(query=query)
-        if company is None:
-            raise HTTPException(status_code=404, detail="Company doesn't exist")
+        if company is None or company.hide_status and (current_user_id is None or current_user_id != company.company_owner_id):
+            raise HTTPException(status_code=404, detail="Company doesn't exist or You have no rights")
         return company
     
     
-    async def update_company(self, company_id: int, company: CompanyCreate, current_user_id: int) -> CompanyBase:
-        db_company = await self.get_company(company_id=company_id)
-        if db_company is None:
-            raise HTTPException(status_code=404, detail="Company doesn't exist")
-        if db_company.company_owner_id != current_user_id:
-            raise HTTPException(status_code=404, detail="This is not your company")
+    async def update_company(self, company_id: int, company: CompanyUpdate, current_user_id: int) -> CompanyBase:
+        db_company = await self.get_company(company_id=company_id, current_user_id=current_user_id)
+        if db_company is None or db_company.company_owner_id != current_user_id:
+            raise HTTPException(status_code=404, detail="Company doesn't exist or You have no rights")
+        company_dict = company.dict(exclude_unset=True)
         query = (
             update(Company)
             .where(Company.company_id == company_id)
-            .values(Company.company_description, Company.company_name, Company.hide_status)
+            .values(**company_dict)
             .returning(Company)
         )
         result = await self.db.fetch_one(query=query)
@@ -56,10 +57,9 @@ class CompanyService:
     
     
     async def delete_company(self, company_id: int, current_user_id: int) -> None:
-        db_company=await self.get_company(company_id=company_id)
+        db_company=await self.get_company(company_id=company_id, current_user_id=current_user_id)
         if db_company.company_owner_id != current_user_id:
-            raise HTTPException(status_code=404, detail="This is not your company")
-            
+            raise HTTPException(status_code=403, detail="You have no rights")
         query = delete(Company).where(Company.company_id == company_id)
         result = await self.db.execute(query=query)
         return result

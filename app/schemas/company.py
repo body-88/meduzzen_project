@@ -1,8 +1,6 @@
-from typing import List, Optional,  TypeVar, Generic
-from pydantic import BaseModel, validator, Field
+from typing import Optional
+from pydantic import BaseModel, validator
 from datetime import datetime
-from fastapi import HTTPException
-from pydantic.generics import GenericModel
 
 class CompanyBase(BaseModel):
     company_id: int 
@@ -17,4 +15,13 @@ class CompanyBase(BaseModel):
 class CompanyCreate(BaseModel):
     company_name: str 
     company_description: Optional[str] 
-    hide_status: bool
+    
+    @validator('company_name')
+    def company_name_must_not_be_empty(cls, v):
+        if not v:
+            raise ValueError('Company name cannot be empty')
+        return v
+    
+
+class CompanyUpdate(CompanyCreate):
+    hide_status: Optional[bool] 
