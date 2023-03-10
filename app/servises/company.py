@@ -23,14 +23,13 @@ class CompanyService:
     
     
     async def get_companies(self, current_user_id: int, skip: int = 0, limit: int = 100):
-        query = select(Company).offset(skip).limit(limit)
+        query = (select(Company).where((Company.hide_status == False) | (Company.company_owner_id == current_user_id)
+        )
+        .offset(skip)
+        .limit(limit)
+    )
         companies = await self.db.fetch_all(query=query)
-        filtered_result = []
-        for company in companies:
-            if company.hide_status and (current_user_id is None or current_user_id != company.company_owner_id):
-                continue
-            filtered_result.append(company)
-        return filtered_result
+        return companies
     
     
     async def get_company(self, company_id: int, current_user_id: int) -> CompanyBase:

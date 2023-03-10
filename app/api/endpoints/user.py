@@ -11,8 +11,6 @@ users_router = APIRouter()
 @users_router.get("", response_model=Result[UsersListResponse], status_code=200, response_description="Users returned")
 async def read_users(service: UserService = Depends(get_user_service), 
                     current_user: UserResponse = Depends(get_current_user)) -> Result[UsersListResponse]:
-    if not current_user:
-        raise_not_authenticated()
     users = await service.get_users()
     return Result[UsersListResponse](result={"users":users})
 
@@ -28,8 +26,6 @@ async def create_user(user: SignUpRequest,
 async def read_user(user_id: int,
                     service: UserService = Depends(get_user_service),
                     current_user: UserResponse = Depends(get_current_user)) -> Result[UserResponse]:
-    if not current_user:
-        raise_not_authenticated()
     db_user = await service.get_user(user_id=user_id)
     return Result[UserResponse](result=db_user)
 
@@ -52,6 +48,6 @@ async def delete_user(user_id: int,
     if current_user.user_id != user_id:
         wrong_account()
     db_user = await service.delete_user(user_id=user_id)
-    return Result(result=db_user, message="Company deleted successfully")
+    return Result(result=db_user, message="User deleted successfully")
 
 
