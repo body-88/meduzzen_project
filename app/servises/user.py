@@ -72,8 +72,8 @@ class UserService:
     async def delete_user(self, user_id: int) -> None:
         await self.get_user(user_id=user_id)
         query = delete(User).where(User.id == user_id)
-        obj = await self.db.execute(query=query)
-        return obj
+        result = await self.db.execute(query=query)
+        return result
 
 
 async def get_user_service(db: Database = Depends(get_db)) -> UserService:
