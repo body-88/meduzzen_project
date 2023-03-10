@@ -20,7 +20,7 @@ async def create_company(company: CompanyCreate,
 
 @companies_router.get("", response_model=Result, status_code=200, response_description="Companies returned")
 async def read_companies(service: CompanyService = Depends(get_company_service), 
-                    current_user: UserResponse = Depends(get_current_user)):
+                    current_user: UserResponse = Depends(get_current_user)) -> Result:
     if not current_user:
         raise_not_authenticated()
     companies = await service.get_companies(current_user_id=current_user.user_id)

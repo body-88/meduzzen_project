@@ -11,7 +11,7 @@ class CompanyService:
         self.db = db
         
         
-    async def create_company(self, company: CompanyCreate, user_id: int):
+    async def create_company(self, company: CompanyCreate, user_id: int) -> CompanyBase:
         query = insert(Company).values(
             company_name = company.company_name,
             company_description = company.company_description,
