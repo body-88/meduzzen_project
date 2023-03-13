@@ -9,6 +9,7 @@ from app.schemas.user import UserResponse, SignUpRequest
 from app.schemas.auth import TokenPayload
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from typing import Optional
+from app.api.exceptions import raise_not_authenticated
 
 
 http_bearer = HTTPBearer()
@@ -17,7 +18,7 @@ http_bearer = HTTPBearer()
 async def get_current_user(token: Optional[HTTPAuthorizationCredentials] = Depends(http_bearer),
                         service: UserService = Depends(get_user_service), ) -> Optional[UserResponse]:
     if token is None:
-        return None
+        raise_not_authenticated()
 
     try:
         payload = jwt.decode(token.credentials, settings.JWT_SECRET_KEY, algorithms=[settings.ALGORITHM])
