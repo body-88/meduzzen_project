@@ -2,27 +2,27 @@ from fastapi import APIRouter, Depends
 from app.schemas.user import SignUpRequest, UserResponse, UsersListResponse, UserUpdateRequest, Result, UserUpdateResponse
 from app.servises.user import UserService, get_user_service
 from app.api.deps import get_current_user
-from app.api.exceptions import raise_not_authenticated, wrong_account
+from app.api.exceptions import wrong_account
 
 router = APIRouter()
 users_router = APIRouter()
 
 
-@users_router.get("", response_model=Result[UsersListResponse], status_code=200, response_description="Users returned")
+@users_router.get("/", response_model=Result[UsersListResponse], status_code=200, response_description="Users returned")
 async def read_users(service: UserService = Depends(get_user_service), 
                     current_user: UserResponse = Depends(get_current_user)) -> Result[UsersListResponse]:
     users = await service.get_users()
     return Result[UsersListResponse](result={"users":users})
 
 
-@router.post("", response_model=Result[UserResponse], status_code=200, response_description="User created")
+@router.post("/", response_model=Result[UserResponse], status_code=200, response_description="User created")
 async def create_user(user: SignUpRequest,
                     service: UserService = Depends(get_user_service)) -> Result[UserResponse]:
     db_user = await service.create_user(user=user)
     return Result(result=UserResponse(**db_user))
     
 
-@router.get("/{user_id}", response_model=Result[UserResponse], status_code=200, response_description="User returned")
+@router.get("/{user_id}/", response_model=Result[UserResponse], status_code=200, response_description="User returned")
 async def read_user(user_id: int,
                     service: UserService = Depends(get_user_service),
                     current_user: UserResponse = Depends(get_current_user)) -> Result[UserResponse]:
@@ -30,7 +30,7 @@ async def read_user(user_id: int,
     return Result[UserResponse](result=db_user)
 
 
-@router.put("/{user_id}", response_model=Result[UserUpdateResponse], status_code=200, response_description="User updated")
+@router.put("/{user_id}/", response_model=Result[UserUpdateResponse], status_code=200, response_description="User updated")
 async def update_user(user: UserUpdateRequest,
                     user_id: int,
                     service: UserService = Depends(get_user_service),
@@ -41,7 +41,7 @@ async def update_user(user: UserUpdateRequest,
     return Result[UserUpdateResponse](result=db_user, message="User has been updated")
 
 
-@router.delete("/{user_id}", status_code=200)
+@router.delete("/{user_id}/", status_code=200)
 async def delete_user(user_id: int,
                     service: UserService = Depends(get_user_service),
                     current_user: UserResponse = Depends(get_current_user))-> Result:

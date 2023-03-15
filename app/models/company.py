@@ -16,3 +16,7 @@ class Company(Base):
     company_owner_id: int = Column(Integer, ForeignKey("users.id"))
     owner = relationship("User", back_populates="companies")
     hide_status: bool = Column(Boolean, default=False, server_default="false", nullable=False)
+    
+    invitations_received = relationship("Invitation", back_populates="to_company")
+    requests_received = relationship("Request", back_populates="to_company")
+    members = relationship("Members", back_populates="company")
