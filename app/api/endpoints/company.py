@@ -52,15 +52,23 @@ async def delete_company(company_id: int,
 
 @router.get("/{company_id}/members", response_model=Result[UsersListResponse], status_code=200, response_description="Company members")
 async def get_company_members(company_id: int,
-                    service: InvitationService = Depends(get_invitation_service), 
+                    service: CompanyService = Depends(get_company_service), 
                     current_user: UserResponse = Depends(get_current_user)) -> Result[UsersListResponse]:
     result = await service.get_members(company_id=company_id)
     return Result[UsersListResponse](result={"users": result})
 
 
-@router.delete("/{company_id}", response_model=Result, status_code=200)
+@router.delete("/{company_id}/leave", response_model=Result, status_code=200)
 async def leave_company(company_id: int,
-    service: InvitationService = Depends(get_invitation_service), 
-                    current_user: UserResponse = Depends(get_current_user)) -> Result:
+                        service: CompanyService = Depends(get_company_service), 
+                        current_user: UserResponse = Depends(get_current_user)) -> Result:
     result = await service.leave_company(current_user_id=current_user.user_id, company_id=company_id)
     return Result(result=result, message="You have left the company")
+
+
+@router.delete("/{company_id}/member/{user_id}/", response_model=Result, status_code=200, response_description="Delete company member")
+async def kick_company_member(company_id: int, user_id: int,
+                    service: CompanyService = Depends(get_company_service), 
+                    current_user: UserResponse = Depends(get_current_user)) -> Result:
+    result = await service.kick_member(company_id=company_id, user_id=user_id, current_user_id=current_user.user_id)
+    return Result(result=result, message="User has been kicked")

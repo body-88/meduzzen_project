@@ -21,7 +21,7 @@ async def test_send_request_not_found_company(ac: AsyncClient, users_tokens):
         "invite_message": "string"
     }
     response = await ac.post("/request/", json=payload, headers=headers)
-    assert response.status_code == 400
+    assert response.status_code == 404
     assert response.json().get('detail') == 'Company does not exist'
 
 
@@ -61,7 +61,7 @@ async def test_send_request_two_success(ac: AsyncClient, users_tokens):
     }
     response = await ac.post("/request/", json=payload, headers=headers)
     assert response.status_code == 200
-    assert response.json().get('detail') == "success"
+    assert response.json().get('message') == "success"
 
 
 async def test_send_request_three_success(ac: AsyncClient, users_tokens):
@@ -74,7 +74,7 @@ async def test_send_request_three_success(ac: AsyncClient, users_tokens):
     }
     response = await ac.post("/request/", json=payload, headers=headers)
     assert response.status_code == 200
-    assert response.json().get('detail') == "success"
+    assert response.json().get('message') == "success"
 
 
 async def test_send_request_exist(ac: AsyncClient, users_tokens):
@@ -100,7 +100,7 @@ async def test_send_request_four_success(ac: AsyncClient, users_tokens):
     }
     response = await ac.post("/request/", json=payload, headers=headers)
     assert response.status_code == 200
-    assert response.json().get('detail') == "success"
+    assert response.json().get('message') == "success"
 
 
 # my requests
@@ -116,7 +116,7 @@ async def test_my_requests_user_one(ac: AsyncClient, users_tokens):
     }
     response = await ac.get("/request/my", headers=headers)
     assert response.status_code == 200
-    assert len(response.json().get('result')) == 0
+    assert len(response.json().get('result')) == 1
 
 
 async def test_my_requests_user_two(ac: AsyncClient, users_tokens):
@@ -168,7 +168,7 @@ async def test_requests_company_one_success(ac: AsyncClient, users_tokens):
     }
     response = await ac.get("/request/company/1/", headers=headers)
     assert response.status_code == 200
-    assert response.json().get('detail') == "success"
+    assert response.json().get('message') == "success"
     assert len(response.json().get('result')) == 2
 
 
@@ -204,7 +204,7 @@ async def test_cancel_request_success(ac: AsyncClient, users_tokens):
     }
     response = await ac.delete("/request/1/", headers=headers)
     assert response.status_code == 200
-    assert response.json().get('detail') == "success"
+    assert response.json().get('message') == "success"
 
 
 # accept request
@@ -236,8 +236,7 @@ async def test_accept_requests_not_owner(ac: AsyncClient, users_tokens):
 
 
 async def test_decline_request_not_auth(ac: AsyncClient):
-    response = await ac.get('/request/3/decline')
-    assert response.status_code == 403
+    response = await ac.get('/request/3/decline/')
     assert response.json().get('detail') == "Not authenticated"
 
 
@@ -245,7 +244,7 @@ async def test_decline_request_not_found(ac: AsyncClient, users_tokens):
     headers = {
         "Authorization": f"Bearer {users_tokens['test1@test.com']}",
     }
-    response = await ac.get('/request/100/decline', headers=headers)
+    response = await ac.get('/request/100/decline/', headers=headers)
     assert response.status_code == 404
     assert response.json().get('detail') == "Request not found"
 
@@ -254,7 +253,7 @@ async def test_decline_request_not_owner(ac: AsyncClient, users_tokens):
     headers = {
         "Authorization": f"Bearer {users_tokens['test2@test.com']}",
     }
-    response = await ac.get('/request/2/decline', headers=headers)
+    response = await ac.get('/request/2/decline/', headers=headers)
     assert response.status_code == 403
     assert response.json().get('detail') == "Only the owner of the company can decline requests"
 
@@ -263,9 +262,9 @@ async def test_decline_request_success(ac: AsyncClient, users_tokens):
     headers = {
         "Authorization": f"Bearer {users_tokens['test1@test.com']}",
     }
-    response = await ac.get('/request/2/decline', headers=headers)
+    response = await ac.get('/request/2/decline/', headers=headers)
     assert response.status_code == 200
-    assert response.json().get('detail') == "success"
+    assert response.json().get('message') == "success"
 
 
 

@@ -39,7 +39,7 @@ async def test_send_invite_not_found_company(ac: AsyncClient, users_tokens):
     }
     response = await ac.post("/invite/", json=payload, headers=headers)
     assert response.status_code == 404
-    assert response.json().get('detail') == 'This company not found'
+    assert response.json().get('detail') == 'Company does not exist'
 
 
 async def test_send_invite_not_your_company(ac: AsyncClient, users_tokens):

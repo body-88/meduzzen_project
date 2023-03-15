@@ -1,6 +1,6 @@
 from databases import Database
 from app.models.user import User
-from app.schemas.user import SignUpRequest, UserUpdateRequest, UserResponse
+from app.schemas.user import SignUpRequest, UserUpdateRequest, UserResponse, Result
 from sqlalchemy import update, delete, select, insert
 from app.db.db_settings import get_db
 from fastapi import Depends, HTTPException
@@ -69,7 +69,7 @@ class UserService:
         return result
 
 
-    async def delete_user(self, user_id: int) -> None:
+    async def delete_user(self, user_id: int) -> Result:
         await self.get_user(user_id=user_id)
         query = delete(User).where(User.id == user_id)
         result = await self.db.execute(query=query)

@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends
-from app.schemas.invitation import InvitationBase, InvitationCreate, InvitationsListResponse
+from app.schemas.invitation import InvitationBase, InvitationCreate
 from app.schemas.user import Result, UserResponse
 from app.servises.company import CompanyService, get_company_service
 from app.api.deps import get_current_user
@@ -23,8 +23,8 @@ async def create_invitation(invitation: InvitationCreate,
     return Result(result=InvitationBase(**result), message="success")
 
 
-@router.delete("/{invitation_id}/", status_code=200)
-async def delete_invitation(invitation_id: int,
+@router.delete("/{invitation_id}/", status_code=200, response_model=Result)
+async def cancel_invitation(invitation_id: int,
                     service: InvitationService = Depends(get_invitation_service),
                     current_user: UserResponse = Depends(get_current_user)) -> Result:
     result = await service.cancel_invitation(invitation_id=invitation_id,

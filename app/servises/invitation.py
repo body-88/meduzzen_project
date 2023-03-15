@@ -8,7 +8,7 @@ from fastapi import Depends, HTTPException
 from app.servises.company import CompanyService
 
 from app.servises.user import UserService
-from app.models.user import User
+from app.schemas.user import Result
 from app.models.company import Company
 from app.models.members import Members
 from typing import List
@@ -65,7 +65,7 @@ class InvitationService:
         return result
     
     
-    async def cancel_invitation(self, invitation_id: int, current_user_id) -> None:
+    async def cancel_invitation(self, invitation_id: int, current_user_id: int) -> Result:
         query = (
         select(Invitation, Company.company_owner_id)
         .join(Company, Invitation.from_company_id == Company.company_id)
@@ -81,7 +81,7 @@ class InvitationService:
         return result
 
     
-    async def accept_invitation(self, current_user_id: int, invitation_id: int) -> None:
+    async def accept_invitation(self, current_user_id: int, invitation_id: int) -> Result:
         db_invitation = await self.get_invitation_by_id(invitation_id=invitation_id,
                                                         current_user_id=current_user_id)
         if not current_user_id == db_invitation.to_user_id:
@@ -97,7 +97,7 @@ class InvitationService:
         return result
     
     
-    async def decline_invitation(self, current_user_id: int, invitation_id: int) -> None:
+    async def decline_invitation(self, current_user_id: int, invitation_id: int) -> Result:
         db_invitation = await self.get_invitation_by_id(invitation_id=invitation_id,
                                                         current_user_id=current_user_id)
         if not current_user_id == db_invitation.to_user_id:
@@ -105,21 +105,6 @@ class InvitationService:
         query = delete(Invitation).where(Invitation.id == invitation_id)
         result = await self.db.execute(query=query)
         return result
-    
-    
-    async def get_members(self, company_id: int) -> List[User]:
-        query = select(User).join(Members).where(Members.company_id == company_id)
-        result = await self.db.fetch_all(query=query)
-        return result
-    
-    
-    async def leave_company(self, current_user_id: int, company_id: int) -> None:
-        query = select(Members).where((Members.user_id == current_user_id) & (Members.company_id == company_id))
-        member = await self.db.fetch_one(query=query)
-        if not member:
-            raise HTTPException(status_code=404, detail="You are not a member of this company")
-        query = delete(Members).where((Members.user_id == current_user_id) & (Members.company_id == company_id))
-        return await self.db.execute(query=query)
 
 
 async def get_invitation_service(db: Database = Depends(get_db)) -> InvitationService:
