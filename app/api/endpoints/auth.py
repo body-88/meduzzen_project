@@ -34,6 +34,6 @@ async def login(form_data: SignInRequest, service: UserService = Depends(get_use
     
 
 
-@router.get('/me', summary='Get details of currently logged in user', response_model=Result[UserResponse])
+@router.get('/me/', summary='Get details of currently logged in user', response_model=Result[UserResponse])
 async def get_me(user = Depends(get_current_user)) -> Result[UserResponse]:
     return Result[UserResponse](result=user)
