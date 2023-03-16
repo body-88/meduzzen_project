@@ -1,4 +1,3 @@
-
 from databases import Database
 from app.schemas.request import RequestBase, RequestCreate
 from sqlalchemy import delete, select, insert
@@ -20,12 +19,19 @@ class RequestService:
                                 current_user_id: int,
                                 company_service: CompanyService,
                                 ) -> RequestBase:
-        
         db_company = await company_service.get_company_by_id(company_id=request.to_company_id)
-        if db_company.company_owner_id == current_user_id:
+        query = select(Members).where(
+            (Members.company_id == request.to_company_id) & 
+            (Members.user_id == current_user_id)
+            )
+        existing_request = await self.db.fetch_one(query=query)
+        if existing_request:
             raise HTTPException(status_code=400, detail="User is already a member of the company")
         
-        query = select(Request).where((Request.to_company_id == request.to_company_id) & (Request.from_user_id == current_user_id))
+        query = select(Request).where(
+            (Request.to_company_id == request.to_company_id) & 
+            (Request.from_user_id == current_user_id)
+            )
         existing_request = await self.db.fetch_one(query=query)
         if existing_request:
             raise HTTPException(status_code=400, detail="Request already sent")
@@ -85,7 +91,7 @@ class RequestService:
         if not current_user_id == db_company.company_owner_id:
             raise HTTPException(status_code=403, detail="Only the owner of the company can accept requests")
         query = insert(Members).values(
-                                        user_id = current_user_id,
+                                        user_id = db_request.from_user_id,
                                         company_id = db_request.to_company_id
                                         ).returning(Members)
         result = await self.db.fetch_one(query=query)

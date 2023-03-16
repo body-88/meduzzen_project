@@ -101,14 +101,6 @@ class CompanyService:
         return company
     
     
-    async def get_member_by_id(self, member_id: int) -> Members:
-        query = select(Members).where(Members.user_id == member_id)
-        member = await self.db.fetch_one(query=query)
-        if member is None:
-            raise HTTPException(status_code=404, detail="Member doesn't exist")
-        return member
-    
-    
     async def get_members(self, company_id: int) -> List[User]:
         query = select(User).join(Members).where(Members.company_id == company_id)
         result = await self.db.fetch_all(query=query)

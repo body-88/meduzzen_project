@@ -116,7 +116,7 @@ async def test_my_requests_user_one(ac: AsyncClient, users_tokens):
     }
     response = await ac.get("/request/my", headers=headers)
     assert response.status_code == 200
-    assert len(response.json().get('result')) == 1
+    assert len(response.json().get('result')) == 0
 
 
 async def test_my_requests_user_two(ac: AsyncClient, users_tokens):

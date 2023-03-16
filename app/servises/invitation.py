@@ -6,12 +6,11 @@ from sqlalchemy import delete, select, insert
 from app.db.db_settings import get_db
 from fastapi import Depends, HTTPException
 from app.servises.company import CompanyService
-
 from app.servises.user import UserService
 from app.schemas.user import Result
 from app.models.company import Company
 from app.models.members import Members
-from typing import List
+
 
 class InvitationService:
     def __init__(self, db: Database):
