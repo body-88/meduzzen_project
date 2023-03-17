@@ -42,7 +42,7 @@ async def update_company(company: CompanyUpdate,
     return Result[CompanyBase](result=result, message="Company has been updated")
 
 
-@router.delete("/{company_id}/", status_code=200, response_description="Company delete")
+@router.delete("/{company_id}/", status_code=200, response_model=Result, response_description="Company delete")
 async def delete_company(company_id: int,
                     service: CompanyService = Depends(get_company_service),
                     current_user: UserResponse = Depends(get_current_user)) -> Result:
