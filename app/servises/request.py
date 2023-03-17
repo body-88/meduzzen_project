@@ -8,6 +8,7 @@ from app.models.company import Company
 from app.models.members import Members
 from app.models.request_membership import Request
 from app.schemas.user import Result
+from app.utils.constants import CompanyRole
 
 
 class RequestService:
@@ -92,7 +93,8 @@ class RequestService:
             raise HTTPException(status_code=403, detail="Only the owner of the company can accept requests")
         query = insert(Members).values(
                                         user_id = db_request.from_user_id,
-                                        company_id = db_request.to_company_id
+                                        company_id = db_request.to_company_id,
+                                        role = CompanyRole.MEMBER.value
                                         ).returning(Members)
         result = await self.db.fetch_one(query=query)
         delete_query = delete(Request).where(Request.id == request_id)

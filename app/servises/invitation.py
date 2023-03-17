@@ -1,4 +1,4 @@
-
+from app.utils.constants import CompanyRole
 from databases import Database
 from app.models.invite_membership import Invitation
 from app.schemas.invitation import InvitationCreate, InvitationBase
@@ -87,8 +87,8 @@ class InvitationService:
             raise HTTPException(status_code=400, detail="It is not your invite")
         query = insert(Members).values(
                                         user_id = current_user_id,
-                                        company_id = db_invitation.from_company_id
-                                        
+                                        company_id = db_invitation.from_company_id,
+                                        role = CompanyRole.MEMBER.value                    
                                         ).returning(Members)
         result = await self.db.fetch_one(query=query)
         delete_query = delete(Invitation).where(Invitation.id == invitation_id)
