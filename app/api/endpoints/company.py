@@ -4,7 +4,7 @@ from app.schemas.user import Result, UserResponse, UsersListResponse
 from app.servises.company import CompanyService, get_company_service
 from app.servises.invitation import InvitationService, get_invitation_service
 from app.api.deps import get_current_user
-
+from app.schemas.member import MakeAdmin
 
 router = APIRouter()
 companies_router = APIRouter()
@@ -42,7 +42,7 @@ async def update_company(company: CompanyUpdate,
     return Result[CompanyBase](result=result, message="Company has been updated")
 
 
-@router.delete("/{company_id}/", status_code=200)
+@router.delete("/{company_id}/", status_code=200, response_description="Company delete")
 async def delete_company(company_id: int,
                     service: CompanyService = Depends(get_company_service),
                     current_user: UserResponse = Depends(get_current_user)) -> Result:
@@ -50,15 +50,15 @@ async def delete_company(company_id: int,
     return Result(result=db_user, message="Company deleted successfully")
 
 
-@router.get("/{company_id}/members", response_model=Result[UsersListResponse], status_code=200, response_description="Company members")
+@router.get("/{company_id}/members", response_model=Result, status_code=200, response_description="Company members")
 async def get_company_members(company_id: int,
                     service: CompanyService = Depends(get_company_service), 
-                    current_user: UserResponse = Depends(get_current_user)) -> Result[UsersListResponse]:
+                    current_user: UserResponse = Depends(get_current_user)) -> Result:
     result = await service.get_members(company_id=company_id)
-    return Result[UsersListResponse](result={"users": result})
+    return Result(result={"users": result})
 
 
-@router.delete("/{company_id}/leave", response_model=Result, status_code=200)
+@router.delete("/{company_id}/leave", response_model=Result, status_code=200, response_description="Leave company")
 async def leave_company(company_id: int,
                         service: CompanyService = Depends(get_company_service), 
                         current_user: UserResponse = Depends(get_current_user)) -> Result:
@@ -72,3 +72,27 @@ async def kick_company_member(company_id: int, user_id: int,
                     current_user: UserResponse = Depends(get_current_user)) -> Result:
     result = await service.kick_member(company_id=company_id, user_id=user_id, current_user_id=current_user.user_id)
     return Result(result=result, message="User has been kicked")
+
+
+@router.post("/{company_id}/admin/", response_model=Result, status_code=200, response_description="Make company admin")
+async def make_admin(company_id: int, member: MakeAdmin,
+                        service: CompanyService = Depends(get_company_service), 
+                        current_user: UserResponse = Depends(get_current_user)) -> Result:
+    result = await service.make_admin(current_user_id=current_user.user_id, member=member, company_id=company_id)
+    return Result(result=result, message="success")
+
+
+@router.get("/{company_id}/admins", response_model=Result, status_code=200, response_description="Company admins")
+async def company_admins(company_id: int,
+                    service: CompanyService = Depends(get_company_service), 
+                    current_user: UserResponse = Depends(get_current_user)) -> Result:
+    result = await service.get_members_admins(company_id=company_id)
+    return Result(result={"admin": result})
+
+
+@router.delete("/{company_id}/admin/{admin_id}", response_model=Result, status_code=200, response_description="Remove company admin")
+async def remove_admin(company_id: int, admin_id: int,
+                        service: CompanyService = Depends(get_company_service), 
+                        current_user: UserResponse = Depends(get_current_user)) -> Result:
+    result = await service.remove_admin(current_user_id=current_user.user_id, admin_id=admin_id, company_id=company_id)
+    return Result(result=result, message="success")

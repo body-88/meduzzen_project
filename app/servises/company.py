@@ -9,7 +9,8 @@ from app.models.invite_membership import Invitation
 from typing import List
 from app.models.user import User
 from app.schemas.user import Result
-
+from app.utils.constants import CompanyRole
+from app.schemas.member import MakeAdmin
 
 class CompanyService:
     def __init__(self, db: Database):
@@ -27,7 +28,8 @@ class CompanyService:
         if db_company:
             query_company = insert(Members).values(
                                         user_id = current_user_id,
-                                        company_id = db_company.company_id
+                                        company_id = db_company.company_id,
+                                        role = CompanyRole.OWNER.value
                                         )
             await self.db.execute(query=query_company)
         return db_company
@@ -101,8 +103,8 @@ class CompanyService:
         return company
     
     
-    async def get_members(self, company_id: int) -> List[User]:
-        query = select(User).join(Members).where(Members.company_id == company_id)
+    async def get_members(self, company_id: int) -> List[Members]:
+        query = select(Members).where(Members.company_id == company_id)
         result = await self.db.fetch_all(query=query)
         return result
     
@@ -128,6 +130,51 @@ class CompanyService:
         query = delete(Members).where((Members.company_id == company_id) & (Members.user_id == user_id))
         result = await self.db.execute(query=query)
         return result
+    
+    
+    async def make_admin(self, company_id: int, member: MakeAdmin, current_user_id: int) -> Result:
+        db_company = await self.get_company_by_user(company_id=company_id, current_user_id=current_user_id)
+        query = select(Members).where((Members.company_id == company_id) & (Members.user_id == member.user_id))
+        db_member = await self.db.fetch_one(query=query)
+        if not db_member:
+            raise HTTPException(status_code=404, detail=f"user with id {member.user_id} not found")
+        query = (
+            update(Members)
+            .where((Members.user_id == member.user_id) & (Members.company_id == company_id))
+            .values(role = CompanyRole.ADMIN.value)
+            .returning(Members)
+        )
+        result = await self.db.fetch_one(query=query)
+        return result
+    
+    
+    async def get_members_admins(self, company_id: int) -> List[Members]:
+        db_company = await self.get_company_by_id(company_id=company_id)
+        query = select(Members).where((Members.company_id == company_id) & (Members.role == CompanyRole.ADMIN.value))
+        result = await self.db.fetch_all(query=query)
+        return result
+    
+    
+    async def get_admin_by_id(self, admin_id: int) -> Members:
+        query = select(Members).where((Members.user_id == admin_id) & (Members.role == CompanyRole.ADMIN.value))
+        admin = await self.db.fetch_one(query=query)
+        return admin
+    
+    
+    async def remove_admin(self, company_id: int, admin_id: int, current_user_id: int) -> Result:
+        db_admin = await self.get_admin_by_id(admin_id=admin_id)
+        if not db_admin:
+            raise HTTPException(status_code=404, detail=f"user with id {admin_id} not found")
+        db_company = await self.get_company_by_user(company_id=company_id, current_user_id=current_user_id)
+        query = (
+            update(Members)
+            .where((Members.user_id == admin_id) & (Members.company_id == company_id))
+            .values(role = CompanyRole.MEMBER.value)
+            .returning(Members)
+        )
+        result = await self.db.fetch_one(query=query)
+        return result
+    
 
 async def get_company_service(db: Database = Depends(get_db)) -> CompanyService:
     return CompanyService(db)
