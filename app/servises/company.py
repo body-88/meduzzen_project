@@ -161,6 +161,15 @@ class CompanyService:
         return admin
     
     
+    async def get_member_role(self, company_id: int, user_id: int):
+        query = select(Members).where((Members.user_id == user_id) & (Members.company_id == company_id))
+        member = await self.db.fetch_one(query=query)
+        if not member:
+            raise HTTPException(status_code=404, detail="You member of the company")
+        if member.role == CompanyRole.MEMBER.value:
+            raise HTTPException(status_code=404, detail="You are not owner or admin")
+        return member
+    
     async def remove_admin(self, company_id: int, admin_id: int, current_user_id: int) -> Result:
         db_admin = await self.get_admin_by_id(admin_id=admin_id)
         if not db_admin:
