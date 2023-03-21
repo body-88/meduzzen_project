@@ -13,7 +13,6 @@ class QuizBase(BaseModel):
     frequency: str 
     created_at: datetime
     updated_at: datetime
-    questions: Union[QuestionBase, None] = None
 
     class Config:
         orm_mode = True
@@ -31,3 +30,17 @@ class QuizCreate(BaseModel):
     description: Optional[str] 
     frequency: str
     questions: List[QuestionCreate]
+
+
+class QuizBaseResponse(BaseModel):
+    id: int 
+    company_id: int 
+    name: str 
+    description: Optional[str] 
+    frequency: str 
+    created_at: datetime
+    updated_at: datetime
+    questions: List[QuestionBase] = []
+
+    class Config:
+        orm_mode = True

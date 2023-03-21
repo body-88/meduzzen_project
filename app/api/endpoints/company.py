@@ -1,13 +1,12 @@
 from fastapi import APIRouter, Depends
 from app.schemas.company import CompanyBase, CompanyCreate, CompanyUpdate
-from app.schemas.user import Result, UserResponse, UsersListResponse
+from app.schemas.user import Result, UserResponse
 from app.servises.company import CompanyService, get_company_service
 from app.servises.invitation import InvitationService, get_invitation_service
 from app.api.deps import get_current_user
 from app.schemas.member import MakeAdmin
 from app.servises.quiz import QuizService, get_quiz_service
-from app.schemas.quiz import QuizBase
-from typing import List
+
 
 
 router = APIRouter()
@@ -102,12 +101,12 @@ async def remove_admin(company_id: int, admin_id: int,
     return Result(result=result, message="success")
 
 
-@router.get("/{company_id}/quizzes", response_model=Result[List[QuizBase]], status_code=200)
+@router.get("/{company_id}/quizzes", response_model=Result, status_code=200)
 async def company_invitations(company_id: int,
                             quiz_service: QuizService = Depends(get_quiz_service),
-                            current_user: UserResponse = Depends(get_current_user)
-                            ) -> Result[List[QuizBase]]:
-    quizzes = await quiz_service.get_quizzes(current_user_id=current_user.user_id,
-                                                    company_id=company_id)
+                            current_user: UserResponse = Depends(get_current_user),
+                            company_service: CompanyService = Depends(get_company_service)
+                            ) -> Result:
+    quizzes = await quiz_service.get_quizzes(company_id=company_id, company_service=company_service)
 
-    return Result[List[QuizBase]](result=quizzes)
+    return Result(result={"quizzes": quizzes})

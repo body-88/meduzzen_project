@@ -1,12 +1,14 @@
 from databases import Database
 from app.models.quiz import Quiz
-from app.schemas.quiz import QuizBase, QuizCreate, QuizUpdate
+from app.schemas.quiz import QuizBase, QuizCreate, QuizUpdate, QuizBaseResponse
 from sqlalchemy import update, delete, select, insert
 from app.db.db_settings import get_db
 from fastapi import Depends, HTTPException
 from app.servises.company import CompanyService
 from app.models.question import Question
-
+from fastapi.encoders import jsonable_encoder
+from app.schemas.user import Result
+from typing import List
 
 class QuizService:
     def __init__(self, db: Database):
@@ -47,21 +49,20 @@ class QuizService:
         return db_quiz
     
     
-    async def get_quizzes(self, company_id: int, current_user_id: int, skip: int = 0, limit: int = 100):
+    async def get_quizzes(self, company_id: int, company_service: CompanyService, skip: int = 0, limit: int = 100) -> List[QuizBase]:
+        db_company= await company_service.get_company_by_id(company_id=company_id)
         query = select(Quiz).where(Quiz.company_id == company_id).offset(skip).limit(limit)
         result = await self.db.fetch_all(query=query)
         return result
     
     
-    async def get_questions(self, quiz_id: int, current_user_id: int, skip: int = 0, limit: int = 100):
-        query = select(Question).where(Question.quiz_id == quiz_id).offset(skip).limit(limit)
-        result = await self.db.fetch_all(query=query)
-        return result
-    
-    
-    async def update_quiz(self, quiz_id: int, company_id: int, quiz: QuizUpdate, current_user_id: int, company_service: CompanyService):
-        db_quiz = await self.get_quiz_by_id(quiz_id=quiz_id)
+    async def update_quiz(self, quiz_id: int,
+                        company_id: int, 
+                        quiz: QuizUpdate, 
+                        current_user_id: int, 
+                        company_service: CompanyService) -> QuizBase:
         db_member = await company_service.get_member_role(company_id=company_id, user_id=current_user_id)
+        db_quiz = await self.get_quiz_by_id(quiz_id=quiz_id)
         quiz_dict = quiz.dict(exclude_unset=True)
         query = (
             update(Quiz)
@@ -73,7 +74,7 @@ class QuizService:
         return result
     
     
-    async def delete_quiz(self, quiz_id: int, company_id: int, current_user_id: int, company_service: CompanyService):
+    async def delete_quiz(self, quiz_id: int, company_id: int, current_user_id: int, company_service: CompanyService) -> Result:
         db_quiz = await self.get_quiz_by_id(quiz_id=quiz_id)
         db_member = await company_service.get_member_role(company_id=company_id, user_id=current_user_id)
         
@@ -87,7 +88,6 @@ class QuizService:
         return result
     
     
-    
     async def get_quiz_by_id(self, quiz_id: int) -> QuizBase:
         query = select(Quiz).where(Quiz.id == quiz_id)
         quiz = await self.db.fetch_one(query=query)
@@ -96,6 +96,21 @@ class QuizService:
         return quiz
     
 
+    async def get_quiz_with_companies(self, quiz_id: int,
+                                    company_id: int,
+                                    current_user_id,
+                                    company_service: CompanyService ) -> QuizBaseResponse:
+        db_member = await company_service.get_member_role(company_id=company_id, user_id=current_user_id)
+        query = select(Quiz).where(Quiz.id == quiz_id)
+        quiz = await self.db.fetch_one(query=query)
+        if quiz is None:
+            raise HTTPException(status_code=404, detail="Quiz does not exist")
+        query = select(Question).where(Question.quiz_id == quiz_id)
+        questions = await self.db.fetch_all(query=query)
+        quiz_base = jsonable_encoder(quiz)
+        quiz_base['questions'] = [jsonable_encoder(question) for question in questions]
+        return QuizBaseResponse(**quiz_base)
+    
 
 
 
