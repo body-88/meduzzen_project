@@ -79,8 +79,8 @@ class QuizService:
         
         async with self.db.transaction():
 
-            members_query = delete(Question).where(Question.quiz_id == quiz_id)
-            await self.db.execute(query=members_query)
+            question_query = delete(Question).where(Question.quiz_id == quiz_id)
+            await self.db.execute(query=question_query)
 
             query = delete(Quiz).where(Quiz.id == quiz_id)
             result = await self.db.execute(query=query)
