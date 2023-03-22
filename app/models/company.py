@@ -3,6 +3,7 @@ from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey
 from datetime import datetime
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
+from app.models.quiz import Quiz
 
 
 class Company(Base):
@@ -20,3 +21,4 @@ class Company(Base):
     invitations_received = relationship("Invitation", back_populates="to_company")
     requests_received = relationship("Request", back_populates="to_company")
     members = relationship("Members", back_populates="company")
+    quizzes = relationship("Quiz", back_populates="company")

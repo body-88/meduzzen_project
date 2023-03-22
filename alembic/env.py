@@ -13,6 +13,9 @@ from app.models.company import Company
 from app.models.invite_membership import Invitation
 from app.models.request_membership import Request
 from app.models.members import Members
+from app.models.quiz import Quiz
+from app.models.question import Question
+
 from app.db.db_settings import DATABASE_URL
 
 # this is the Alembic Config object, which provides

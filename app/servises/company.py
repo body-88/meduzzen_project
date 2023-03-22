@@ -7,7 +7,6 @@ from fastapi import Depends, HTTPException
 from app.models.members import Members
 from app.models.invite_membership import Invitation
 from typing import List
-from app.models.user import User
 from app.schemas.user import Result
 from app.utils.constants import CompanyRole
 from app.schemas.member import MakeAdmin
@@ -159,6 +158,16 @@ class CompanyService:
         query = select(Members).where((Members.user_id == admin_id) & (Members.role == CompanyRole.ADMIN.value))
         admin = await self.db.fetch_one(query=query)
         return admin
+    
+    
+    async def get_member_role(self, company_id: int, user_id: int):
+        query = select(Members).where((Members.user_id == user_id) & (Members.company_id == company_id))
+        member = await self.db.fetch_one(query=query)
+        if not member:
+            raise HTTPException(status_code=404, detail="You're not member of the company or company doesn't exist")
+        if member.role != CompanyRole.OWNER.value and member.role != CompanyRole.ADMIN.value:
+            raise HTTPException(status_code=403, detail="You are not owner or admin")
+        return member
     
     
     async def remove_admin(self, company_id: int, admin_id: int, current_user_id: int) -> Result:
