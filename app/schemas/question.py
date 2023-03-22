@@ -21,8 +21,5 @@ class QuestionCreate(BaseModel):
     
 
     
-class QuestionUpdate(BaseModel):
-    quiz_id: int
-    question: str
-    answer_variants: List[str]
-    correct_answer: int
+class QuestionUpdate(QuestionCreate):
+    pass
