@@ -1,7 +1,7 @@
 from databases import Database
 from app.models.company import Company
 from app.schemas.company import CompanyBase, CompanyCreate, CompanyUpdate
-from sqlalchemy import update, delete, select, insert
+from sqlalchemy import update, delete, select, insert, desc
 from app.db.db_settings import get_db
 from fastapi import Depends, HTTPException
 from app.models.members import Members
@@ -10,6 +10,10 @@ from typing import List
 from app.schemas.user import Result
 from app.utils.constants import CompanyRole
 from app.schemas.member import MakeAdmin
+from app.schemas.quiz_result import  QuizSubmit
+from app.models.quiz_result import QuizResult
+
+
 
 class CompanyService:
     def __init__(self, db: Database):
@@ -184,6 +188,89 @@ class CompanyService:
         result = await self.db.fetch_one(query=query)
         return result
     
+    
+    async def get_member(self, company_id: int, user_id: int):
+        query = select(Members).where((Members.user_id == user_id) & (Members.company_id == company_id))
+        member = await self.db.fetch_one(query=query)
+        if not member:
+            raise HTTPException(status_code=404, detail="You're not member of the company or company doesn't exist")
+        return member
+    
+    
+    async def pass_quiz(self, company_id: int,
+                        quiz_id: int,
+                        current_user_id: int,
+                        quiz_submit: QuizSubmit,
+                        quiz_service, question_service) -> Result:
+        db_company = await self.get_company_by_id(company_id=company_id)
+        db_member = await self.get_member(company_id=company_id, user_id=current_user_id)
+        questions_for_quiz = await question_service.get_questions_by_quiz(quiz_id=quiz_id)
+        question_answers = {question.id: question.correct_answer for question in questions_for_quiz}
+        quiz_dict = quiz_submit.dict()
+        num_correct = 0
+        for user_answer in quiz_dict.get("answers"):
+            if user_answer.get("id") in question_answers and \
+            user_answer.get("correct_answer") == question_answers[user_answer.get("id")]:
+                num_correct += 1
+        query=select(QuizResult).where((QuizResult.user_id == current_user_id) & 
+                                    (QuizResult.company_id == company_id) & 
+                                    (QuizResult.quiz_id == quiz_id)).order_by(
+                                    desc(QuizResult.date)).limit(1)
+        db_quiz_result = await self.db.fetch_one(query=query)
+        questions_number = len(questions_for_quiz)
+        answers_number = num_correct
+        if db_quiz_result:
+            questions_number += db_quiz_result.questions_number
+            answers_number += db_quiz_result.answers_number
+            average_result = ((answers_number) / questions_number) * 10
+        else:
+            average_result = (num_correct / questions_number) * 10
+        query = insert(QuizResult).values(
+        user_id=current_user_id,
+        company_id=company_id,
+        quiz_id=quiz_id,
+        average_result=average_result,
+        questions_number=questions_number,
+        answers_number=answers_number
+    ).returning(QuizResult)
+        result = await self.db.fetch_one(query=query)
+        return average_result
+        
 
+    async def get_user_overall_rating(self, user_id: int) -> Result:
+        query = select(QuizResult).where(QuizResult.user_id == user_id)
+        quiz_results = await self.db.fetch_all(query=query)
+        total_answers_number = 0
+        total_questions_answered = 0
+        for quiz_result in quiz_results:
+            total_answers_number += quiz_result.answers_number
+            total_questions_answered += quiz_result.questions_number
+        if total_questions_answered > 0:
+            overall_rating = (total_answers_number / total_questions_answered) * 10
+        else:
+            overall_rating = 0
+        return overall_rating
+
+
+    async def get_user_company_rating(self, company_id: int, user_id: int) -> Result:
+        db_company = await self.get_company_by_id(company_id=company_id)
+        db_member = await self.get_member(company_id=company_id, user_id=user_id)
+        query = select(QuizResult).where(
+            (QuizResult.user_id == user_id) &
+            (QuizResult.company_id == company_id)
+        )
+        db_results = await self.db.fetch_all(query=query)
+        if not db_results:
+            return None
+
+        total_num_questions = 0
+        total_num_correct_answers = 0
+        for result in db_results:
+            total_num_questions += result.questions_number
+            total_num_correct_answers += result.answers_number
+
+        overall_rating = (total_num_correct_answers / total_num_questions) * 10
+        return overall_rating
+        
 async def get_company_service(db: Database = Depends(get_db)) -> CompanyService:
     return CompanyService(db)

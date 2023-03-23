@@ -6,6 +6,8 @@ from app.servises.invitation import InvitationService, get_invitation_service
 from app.api.deps import get_current_user
 from app.schemas.member import MakeAdmin
 from app.servises.quiz import QuizService, get_quiz_service
+from app.schemas.quiz_result import QuizSubmit
+from app.servises.question import QuestionService, get_question_service
 
 
 
@@ -108,5 +110,27 @@ async def company_invitations(company_id: int,
                             company_service: CompanyService = Depends(get_company_service)
                             ) -> Result:
     quizzes = await quiz_service.get_quizzes(company_id=company_id, company_service=company_service)
-
     return Result(result={"quizzes": quizzes})
+
+
+@router.post("/{company_id}/quiz/{quiz_id}/submit", response_model=Result, status_code=200, response_description="Pass quiz")
+async def pass_quiz(company_id: int, quiz_id: int, quiz_submit: QuizSubmit,
+                        service: CompanyService = Depends(get_company_service), 
+                        current_user: UserResponse = Depends(get_current_user),
+                        quiz_service: QuizService = Depends(get_quiz_service),
+                        question_service: QuestionService = Depends(get_question_service)) -> Result:
+    result = await service.pass_quiz(current_user_id=current_user.user_id,
+                                    quiz_id=quiz_id,
+                                    company_id=company_id,
+                                    quiz_submit=quiz_submit,
+                                    quiz_service=quiz_service,
+                                    question_service=question_service)
+    return Result(result=result, message="success")
+
+
+@router.get("/{company_id}/rating", response_model=Result, status_code=200, response_description="Company rating returned")
+async def read_company(company_id: int,
+                    service: CompanyService = Depends(get_company_service),
+                    current_user: UserResponse = Depends(get_current_user)) -> Result:
+    result = await service.get_user_company_rating(company_id=company_id, user_id=current_user.user_id)
+    return Result(result=result, message="success")
