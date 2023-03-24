@@ -12,12 +12,14 @@ from app.utils.constants import CompanyRole
 from app.schemas.member import MakeAdmin
 from app.schemas.quiz_result import  QuizSubmit
 from app.models.quiz_result import QuizResult
-
-
+from app.db.db_settings import get_redis, aioredis
+import datetime
+import json
 
 class CompanyService:
-    def __init__(self, db: Database):
+    def __init__(self, db: Database, redis: aioredis.Redis):
         self.db = db
+        self.redis = redis
         
         
     async def create_company(self, company: CompanyCreate, current_user_id: int) -> CompanyBase:
@@ -206,12 +208,14 @@ class CompanyService:
         db_member = await self.get_member(company_id=company_id, user_id=current_user_id)
         questions_for_quiz = await question_service.get_questions_by_quiz(quiz_id=quiz_id, quiz_service=quiz_service)
         question_answers = {question.id: question.correct_answer for question in questions_for_quiz}
+        list_user_answers=[]
         quiz_dict = quiz_submit.dict()
         num_correct = 0
         for user_answer in quiz_dict.get("answers"):
             if user_answer.get("id") in question_answers and \
             user_answer.get("correct_answer") == question_answers[user_answer.get("id")]:
                 num_correct += 1
+            list_user_answers.append(user_answer.get("correct_answer"))
         query=select(QuizResult).where((QuizResult.user_id == current_user_id) & 
                                     (QuizResult.company_id == company_id) & 
                                     (QuizResult.quiz_id == quiz_id)).order_by(
@@ -232,10 +236,33 @@ class CompanyService:
         average_result=average_result,
         questions_number=questions_number,
         answers_number=answers_number
-    ).returning(QuizResult)
+        ).returning(QuizResult)
         result = await self.db.fetch_one(query=query)
+        questions_ids=list(question_answers.keys())
+        questions_correct_answers = list(question_answers.values())
+        save_redis = await self.save_quiz_result_to_redis(user_id=current_user_id,
+                                                        quiz_id=quiz_id,
+                                                        company_id=company_id,
+                                                        questions=questions_ids,
+                                                        correct_answer=questions_correct_answers,
+                                                        user_answer=list_user_answers)
         return average_result
-        
+    
+    
+    async def save_quiz_result_to_redis(self, user_id: int, quiz_id: int, company_id: int, questions, user_answer, correct_answer):
+        result = {
+            "user_id": user_id,
+            "quiz_id": quiz_id,
+            "company_id": company_id,
+            "questions": questions,
+            "user_answer": user_answer,
+            "correct_answer": correct_answer,
+            "timestamp": datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        }
+        key = f"quiz_result:{user_id}:{quiz_id}:{company_id}"
+        await self.redis.set(key, json.dumps(result))
+        await self.redis.expire(key, 172800)
+
 
     async def get_user_overall_rating(self, user_id: int) -> Result:
         subquery = select(func.max(QuizResult.id)).where(
@@ -282,5 +309,5 @@ class CompanyService:
         overall_rating = (total_num_correct_answers / total_num_questions) * 10
         return overall_rating
         
-async def get_company_service(db: Database = Depends(get_db)) -> CompanyService:
-    return CompanyService(db)
+async def get_company_service(db: Database = Depends(get_db), redis: aioredis.Redis = Depends(get_redis)) -> CompanyService:
+    return CompanyService(db, redis)
