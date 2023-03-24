@@ -1,7 +1,7 @@
 from databases import Database
 from app.models.company import Company
 from app.schemas.company import CompanyBase, CompanyCreate, CompanyUpdate
-from sqlalchemy import update, delete, select, insert, desc
+from sqlalchemy import update, delete, select, insert, desc, func
 from app.db.db_settings import get_db
 from fastapi import Depends, HTTPException
 from app.models.members import Members
@@ -204,7 +204,7 @@ class CompanyService:
                         quiz_service, question_service) -> Result:
         db_company = await self.get_company_by_id(company_id=company_id)
         db_member = await self.get_member(company_id=company_id, user_id=current_user_id)
-        questions_for_quiz = await question_service.get_questions_by_quiz(quiz_id=quiz_id)
+        questions_for_quiz = await question_service.get_questions_by_quiz(quiz_id=quiz_id, quiz_service=quiz_service)
         question_answers = {question.id: question.correct_answer for question in questions_for_quiz}
         quiz_dict = quiz_submit.dict()
         num_correct = 0
@@ -215,14 +215,14 @@ class CompanyService:
         query=select(QuizResult).where((QuizResult.user_id == current_user_id) & 
                                     (QuizResult.company_id == company_id) & 
                                     (QuizResult.quiz_id == quiz_id)).order_by(
-                                    desc(QuizResult.date)).limit(1)
+                                    desc(QuizResult.id)).limit(1)
         db_quiz_result = await self.db.fetch_one(query=query)
         questions_number = len(questions_for_quiz)
         answers_number = num_correct
         if db_quiz_result:
             questions_number += db_quiz_result.questions_number
             answers_number += db_quiz_result.answers_number
-            average_result = ((answers_number) / questions_number) * 10
+            average_result = ((db_quiz_result.answers_number + num_correct) / questions_number) * 10
         else:
             average_result = (num_correct / questions_number) * 10
         query = insert(QuizResult).values(
@@ -238,7 +238,13 @@ class CompanyService:
         
 
     async def get_user_overall_rating(self, user_id: int) -> Result:
-        query = select(QuizResult).where(QuizResult.user_id == user_id)
+        subquery = select(func.max(QuizResult.id)).where(
+        QuizResult.user_id == user_id
+        ).group_by(QuizResult.quiz_id).subquery()
+
+        query = select(QuizResult).where(
+                QuizResult.id.in_(subquery)
+            )
         quiz_results = await self.db.fetch_all(query=query)
         total_answers_number = 0
         total_questions_answered = 0
@@ -255,20 +261,24 @@ class CompanyService:
     async def get_user_company_rating(self, company_id: int, user_id: int) -> Result:
         db_company = await self.get_company_by_id(company_id=company_id)
         db_member = await self.get_member(company_id=company_id, user_id=user_id)
-        query = select(QuizResult).where(
+        subquery = select(func.max(QuizResult.id)).where(
             (QuizResult.user_id == user_id) &
             (QuizResult.company_id == company_id)
+        ).group_by(QuizResult.quiz_id)
+
+        query = select(QuizResult).where(
+            (QuizResult.user_id == user_id) &
+            (QuizResult.company_id == company_id) &
+            (QuizResult.id.in_(subquery))
         )
         db_results = await self.db.fetch_all(query=query)
         if not db_results:
             return None
-
         total_num_questions = 0
         total_num_correct_answers = 0
         for result in db_results:
             total_num_questions += result.questions_number
             total_num_correct_answers += result.answers_number
-
         overall_rating = (total_num_correct_answers / total_num_questions) * 10
         return overall_rating
         
