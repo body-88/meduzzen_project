@@ -15,6 +15,8 @@ from app.models.quiz_result import QuizResult
 from app.db.db_settings import get_redis, aioredis
 import datetime
 import json
+import csv
+
 
 class CompanyService:
     def __init__(self, db: Database, redis: aioredis.Redis):
@@ -230,13 +232,13 @@ class CompanyService:
         else:
             average_result = (num_correct / questions_number) * 10
         query = insert(QuizResult).values(
-        user_id=current_user_id,
-        company_id=company_id,
-        quiz_id=quiz_id,
-        average_result=average_result,
-        questions_number=questions_number,
-        answers_number=answers_number
-        ).returning(QuizResult)
+            user_id=current_user_id,
+            company_id=company_id,
+            quiz_id=quiz_id,
+            average_result=average_result,
+            questions_number=questions_number,
+            answers_number=answers_number
+            ).returning(QuizResult)
         result = await self.db.fetch_one(query=query)
         questions_ids=list(question_answers.keys())
         questions_correct_answers = list(question_answers.values())
@@ -308,6 +310,78 @@ class CompanyService:
             total_num_correct_answers += result.answers_number
         overall_rating = (total_num_correct_answers / total_num_questions) * 10
         return overall_rating
+    
+    
+    async def get_my_result(self, company_id: int, quiz_id: int, user_id: int, quiz_service):
+        db_company = await self.get_company_by_id(company_id=company_id)
+        db_member = await self.get_member(company_id=company_id, user_id=user_id)
+        db_quiz = await quiz_service.get_quiz_by_id(quiz_id=quiz_id)
+        key = f"quiz_result:{user_id}:{quiz_id}:{company_id}"
+        result = await self.redis.get(key)
+        if result:
+            result_dict = json.loads(result)
+            return result_dict
+        else:
+            return None
+        
+        
+    async def export_quiz_results_to_csv(self, user_id: int, quiz_id: int, company_id: int, csv_file, quiz_service):
+        db_company = await self.get_company_by_id(company_id=company_id)
+        db_member = await self.get_member(company_id=company_id, user_id=user_id)
+        db_quiz = await quiz_service.get_quiz_by_id(quiz_id=quiz_id)
+        key = f"quiz_result:{user_id}:{quiz_id}:{company_id}"
+        result = await self.redis.get(key)
+        if result:
+            result_dict = json.loads(result)
+            writer = csv.writer(csv_file)
+            writer.writerow([f'user_id: {result_dict["user_id"]}',
+                            f'quiz_id: {result_dict["quiz_id"]}',
+                            f'company_id: {result_dict["company_id"]}',
+                            f'questions: {result_dict["questions"]}',
+                            f'user_answer: {result_dict["user_answer"]}',
+                            f'correct_answer: {result_dict["correct_answer"]}',
+                            f'timestamp: {result_dict["timestamp"]}'])
+        else:
+            return None
+        
+        
+    async def get_member_result(self, company_id: int, user_id: int, current_user_id: int):
+        db_company = await self.get_company_by_id(company_id=company_id)
+        is_admin_owner = await self.get_member_role(company_id=company_id,user_id=current_user_id)
+        is_member = await self.get_member(user_id=user_id, company_id=company_id)
+        subquery = select(func.max(QuizResult.id)).where(
+            (QuizResult.user_id == user_id) &
+            (QuizResult.company_id == company_id)
+        ).group_by(QuizResult.quiz_id)
+
+        query = select(QuizResult).where(
+            (QuizResult.user_id == user_id) &
+            (QuizResult.company_id == company_id) &
+            (QuizResult.id.in_(subquery))
+        )
+        db_results = await self.db.fetch_all(query=query)
+        
+        return db_results
+    
+    
+    async def get_all_results_by_quiz(self, company_id: int, quiz_id: int, current_user_id: int):
+        db_company = await self.get_company_by_id(company_id=company_id)
+        is_admin_owner = await self.get_member_role(company_id=company_id,user_id=current_user_id)
+        query = select(QuizResult).where(
+            (QuizResult.company_id == company_id) &
+            (QuizResult.quiz_id == quiz_id)
+        ).order_by(
+            QuizResult.date
+        ).group_by(
+            QuizResult.user_id,
+            QuizResult.company_id
+        ).distinct(
+            QuizResult.user_id,
+            QuizResult.company_id
+        )
+
+        db_results = await self.db.fetch_all(query)
+        return db_results
         
 async def get_company_service(db: Database = Depends(get_db), redis: aioredis.Redis = Depends(get_redis)) -> CompanyService:
     return CompanyService(db, redis)

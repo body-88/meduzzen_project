@@ -8,7 +8,6 @@ from app.schemas.member import MakeAdmin
 from app.servises.quiz import QuizService, get_quiz_service
 from app.schemas.quiz_result import QuizSubmit
 from app.servises.question import QuestionService, get_question_service
-from app.db.db_settings import get_redis
 
 
 router = APIRouter()
@@ -130,8 +129,26 @@ async def pass_quiz(company_id: int, quiz_id: int, quiz_submit: QuizSubmit,
 
 
 @router.get("/{company_id}/rating", response_model=Result, status_code=200, response_description="Company rating returned")
-async def read_company(company_id: int,
+async def get_rating(company_id: int,
                     service: CompanyService = Depends(get_company_service),
                     current_user: UserResponse = Depends(get_current_user)) -> Result:
     result = await service.get_user_company_rating(company_id=company_id, user_id=current_user.user_id)
+    return Result(result=result, message="success")
+
+
+@router.get("/{company_id}/user/{user_id}/results", response_model=Result, status_code=200, response_description="User results in company returned")
+async def get_member_results(company_id: int,
+                            user_id: int,
+                            service: CompanyService = Depends(get_company_service),
+                            current_user: UserResponse = Depends(get_current_user)) -> Result:
+    result = await service.get_member_result(company_id=company_id, current_user_id=current_user.user_id, user_id=user_id)
+    return Result(result=result, message="success")
+
+
+@router.get("/{company_id}/quiz/{quiz_id}/results", response_model=Result, status_code=200, response_description="Quiz results in company returned")
+async def get_results_by_quiz(company_id: int,
+                            quiz_id: int,
+                            service: CompanyService = Depends(get_company_service),
+                            current_user: UserResponse = Depends(get_current_user)) -> Result:
+    result = await service.get_all_results_by_quiz(company_id=company_id, current_user_id=current_user.user_id, quiz_id=quiz_id)
     return Result(result=result, message="success")
