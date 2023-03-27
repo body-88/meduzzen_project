@@ -10,7 +10,6 @@ from app.schemas.quiz_result import QuizSubmit
 from app.servises.question import QuestionService, get_question_service
 
 
-
 router = APIRouter()
 companies_router = APIRouter()
 
@@ -124,7 +123,8 @@ async def pass_quiz(company_id: int, quiz_id: int, quiz_submit: QuizSubmit,
                                     company_id=company_id,
                                     quiz_submit=quiz_submit,
                                     quiz_service=quiz_service,
-                                    question_service=question_service)
+                                    question_service=question_service,
+                                )
     return Result(result=result, message="success")
 
 
