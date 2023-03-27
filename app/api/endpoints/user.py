@@ -3,6 +3,7 @@ from app.schemas.user import SignUpRequest, UserResponse, UsersListResponse, Use
 from app.servises.user import UserService, get_user_service
 from app.api.deps import get_current_user
 from app.api.exceptions import wrong_account
+from app.servises.company import CompanyService, get_company_service
 
 router = APIRouter()
 users_router = APIRouter()
@@ -51,3 +52,8 @@ async def delete_user(user_id: int,
     return Result(result=db_user, message="User deleted successfully")
 
 
+@router.get("/system_rating", response_model=Result, status_code=200, response_description="System rating")
+async def read_user(current_user: UserResponse = Depends(get_current_user),
+                    company_service: CompanyService = Depends(get_company_service)) -> Result:
+    system_rating = await company_service.get_user_overall_rating(user_id=current_user.user_id)
+    return Result(result=system_rating, message="success")

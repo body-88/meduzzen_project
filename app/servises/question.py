@@ -81,7 +81,8 @@ class QuestionService:
         return db_question
 
     
-    async def get_questions_by_quiz(self, quiz_id: int, skip: int = 0, limit: int = 100) -> List[QuestionBase]:
+    async def get_questions_by_quiz(self, quiz_service: QuizService, quiz_id: int, skip: int = 0, limit: int = 100) -> List[QuestionBase]:
+        db_quiz = await quiz_service.get_quiz_by_id(quiz_id=quiz_id)
         query = select(Question).where(Question.quiz_id == quiz_id).offset(skip).limit(limit)
         result = await self.db.fetch_all(query=query)
         return result
