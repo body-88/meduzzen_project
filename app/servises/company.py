@@ -6,7 +6,7 @@ from app.db.db_settings import get_db
 from fastapi import Depends, HTTPException
 from app.models.members import Members
 from app.models.invite_membership import Invitation
-from typing import List
+from typing import List, TYPE_CHECKING
 from app.schemas.user import Result
 from app.utils.constants import CompanyRole
 from app.schemas.member import MakeAdmin
@@ -16,6 +16,7 @@ from app.db.db_settings import get_redis, aioredis
 import datetime
 import json
 import csv
+from io import StringIO
 
 
 class CompanyService:
@@ -251,7 +252,12 @@ class CompanyService:
         return average_result
     
     
-    async def save_quiz_result_to_redis(self, user_id: int, quiz_id: int, company_id: int, questions, user_answer, correct_answer):
+    async def save_quiz_result_to_redis(self, user_id: int,
+                                        quiz_id: int,
+                                        company_id: int,
+                                        questions: List[int],
+                                        user_answer: List[int],
+                                        correct_answer: List[int]):
         result = {
             "user_id": user_id,
             "quiz_id": quiz_id,
@@ -325,7 +331,7 @@ class CompanyService:
             return None
         
         
-    async def export_quiz_results_to_csv(self, user_id: int, quiz_id: int, company_id: int, csv_file, quiz_service):
+    async def get_my_result_to_csv(self, user_id: int, quiz_id: int, company_id: int, csv_file: StringIO, quiz_service) -> Result:
         db_company = await self.get_company_by_id(company_id=company_id)
         db_member = await self.get_member(company_id=company_id, user_id=user_id)
         db_quiz = await quiz_service.get_quiz_by_id(quiz_id=quiz_id)
@@ -343,45 +349,133 @@ class CompanyService:
                             f'timestamp: {result_dict["timestamp"]}'])
         else:
             return None
-        
-        
-    async def get_member_result(self, company_id: int, user_id: int, current_user_id: int):
+    
+    
+    async def get_member_result_by_user(self, company_id: int, user_id: int, current_user_id: int) -> Result:
         db_company = await self.get_company_by_id(company_id=company_id)
         is_admin_owner = await self.get_member_role(company_id=company_id,user_id=current_user_id)
         is_member = await self.get_member(user_id=user_id, company_id=company_id)
-        subquery = select(func.max(QuizResult.id)).where(
-            (QuizResult.user_id == user_id) &
-            (QuizResult.company_id == company_id)
-        ).group_by(QuizResult.quiz_id)
-
-        query = select(QuizResult).where(
-            (QuizResult.user_id == user_id) &
-            (QuizResult.company_id == company_id) &
-            (QuizResult.id.in_(subquery))
-        )
-        db_results = await self.db.fetch_all(query=query)
+        keys = await self.redis.keys(f"quiz_result:{user_id}:*:{company_id}")
+        results = []
+        for key in keys:
+            result = await self.redis.get(key)
+            if result:
+                result_dict = json.loads(result)
+                results.append({
+                    'user_id': result_dict['user_id'],
+                    'quiz_id': result_dict['quiz_id'],
+                    'company_id': result_dict['company_id'],
+                    'timestamp': result_dict['timestamp'],
+                    'questions': result_dict['questions'],
+                    'user_answer': result_dict['user_answer'],
+                    'correct_answer': result_dict['correct_answer']
+                })
+        return results
         
-        return db_results
-    
-    
-    async def get_all_results_by_quiz(self, company_id: int, quiz_id: int, current_user_id: int):
+        
+    async def get_member_result_by_user_to_csv(self, company_id: int, user_id: int, current_user_id: int, csv_file: StringIO) -> Result:
         db_company = await self.get_company_by_id(company_id=company_id)
         is_admin_owner = await self.get_member_role(company_id=company_id,user_id=current_user_id)
-        query = select(QuizResult).where(
-            (QuizResult.company_id == company_id) &
-            (QuizResult.quiz_id == quiz_id)
-        ).order_by(
-            QuizResult.date
-        ).group_by(
-            QuizResult.user_id,
-            QuizResult.company_id
-        ).distinct(
-            QuizResult.user_id,
-            QuizResult.company_id
-        )
+        is_member = await self.get_member(user_id=user_id, company_id=company_id)
+        keys = await self.redis.keys(f"quiz_result:{user_id}:*:{company_id}")
+        for key in keys:
+            result = await self.redis.get(key)
+            if result:
+                result_dict = json.loads(result)
+                writer = csv.writer(csv_file)
+                writer.writerow([f'user_id: {result_dict["user_id"]}',
+                                f'quiz_id: {result_dict["quiz_id"]}',
+                                f'company_id: {result_dict["company_id"]}',
+                                f'questions: {result_dict["questions"]}',
+                                f'user_answer: {result_dict["user_answer"]}',
+                                f'correct_answer: {result_dict["correct_answer"]}',
+                                f'timestamp: {result_dict["timestamp"]}'])
+            else:
+                return None
+    
+    
 
-        db_results = await self.db.fetch_all(query)
-        return db_results
-        
+    
+    
+    async def get_all_members_result(self, company_id: int, current_user_id: int) -> Result:
+        db_company = await self.get_company_by_id(company_id=company_id)
+        is_admin_owner = await self.get_member_role(company_id=company_id,user_id=current_user_id)
+        keys = await self.redis.keys(f"quiz_result:*:*:{company_id}")
+        results = []
+        for key in keys:
+            result = await self.redis.get(key)
+            result_dict = json.loads(result)
+            results.append({
+                "user_id": result_dict["user_id"],
+                "quiz_id": result_dict["quiz_id"],
+                "company_id": result_dict["company_id"],
+                "timestamp": result_dict["timestamp"],
+                "questions": result_dict["questions"],
+                "user_answer": result_dict["user_answer"],
+                "correct_answer": result_dict["correct_answer"]
+            })
+        return results
+    
+    
+    async def get_all_members_result_to_csv(self, company_id: int, current_user_id: int, csv_file: StringIO) -> Result:
+        db_company = await self.get_company_by_id(company_id=company_id)
+        is_admin_owner = await self.get_member_role(company_id=company_id, user_id=current_user_id)
+        keys = await self.redis.keys(f"quiz_result:*:*:{company_id}")
+        for key in keys:
+            result = await self.redis.get(key)
+            if result:
+                result_dict = json.loads(result)
+                writer = csv.writer(csv_file)
+                writer.writerow([f'user_id: {result_dict["user_id"]}',
+                                f'quiz_id: {result_dict["quiz_id"]}',
+                                f'company_id: {result_dict["company_id"]}',
+                                f'questions: {result_dict["questions"]}',
+                                f'user_answer: {result_dict["user_answer"]}',
+                                f'correct_answer: {result_dict["correct_answer"]}',
+                                f'timestamp: {result_dict["timestamp"]}'])
+            else:
+                return None
+    
+    
+    async def get_all_results_by_quiz(self, company_id: int, quiz_id: int, current_user_id: int) -> Result:
+        db_company = await self.get_company_by_id(company_id=company_id)
+        is_admin_owner = await self.get_member_role(company_id=company_id,user_id=current_user_id)
+        keys = await self.redis.keys(f"quiz_result:*:{quiz_id}:{company_id}")
+        results = []
+        for key in keys:
+            result = await self.redis.get(key)
+            result_dict = json.loads(result)
+            results.append({
+                "user_id": result_dict["user_id"],
+                "quiz_id": result_dict["quiz_id"],
+                "company_id": result_dict["company_id"],
+                "timestamp": result_dict["timestamp"],
+                "questions": result_dict["questions"],
+                "user_answer": result_dict["user_answer"],
+                "correct_answer": result_dict["correct_answer"]
+            })
+        return results
+    
+    
+    async def get_all_results_by_quiz_to_csv(self, company_id: int, quiz_id: int, current_user_id: int, csv_file: StringIO) -> Result:
+        db_company = await self.get_company_by_id(company_id=company_id)
+        is_admin_owner = await self.get_member_role(company_id=company_id,user_id=current_user_id)
+        keys = await self.redis.keys(f"quiz_result:*:{quiz_id}:{company_id}")
+        for key in keys:
+            result = await self.redis.get(key)
+            if result:
+                result_dict = json.loads(result)
+                writer = csv.writer(csv_file)
+                writer.writerow([f'user_id: {result_dict["user_id"]}',
+                                f'quiz_id: {result_dict["quiz_id"]}',
+                                f'company_id: {result_dict["company_id"]}',
+                                f'questions: {result_dict["questions"]}',
+                                f'user_answer: {result_dict["user_answer"]}',
+                                f'correct_answer: {result_dict["correct_answer"]}',
+                                f'timestamp: {result_dict["timestamp"]}'])
+            else:
+                return None
+    
+
 async def get_company_service(db: Database = Depends(get_db), redis: aioredis.Redis = Depends(get_redis)) -> CompanyService:
     return CompanyService(db, redis)

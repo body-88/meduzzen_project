@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Response
 from app.schemas.company import CompanyBase, CompanyCreate, CompanyUpdate
 from app.schemas.user import Result, UserResponse
 from app.servises.company import CompanyService, get_company_service
@@ -8,6 +8,9 @@ from app.schemas.member import MakeAdmin
 from app.servises.quiz import QuizService, get_quiz_service
 from app.schemas.quiz_result import QuizSubmit
 from app.servises.question import QuestionService, get_question_service
+from io import StringIO
+from typing import Optional
+
 
 
 router = APIRouter()
@@ -139,16 +142,62 @@ async def get_rating(company_id: int,
 @router.get("/{company_id}/user/{user_id}/results", response_model=Result, status_code=200, response_description="User results in company returned")
 async def get_member_results(company_id: int,
                             user_id: int,
+                            format: Optional[str] = "json",
                             service: CompanyService = Depends(get_company_service),
                             current_user: UserResponse = Depends(get_current_user)) -> Result:
-    result = await service.get_member_result(company_id=company_id, current_user_id=current_user.user_id, user_id=user_id)
+    if format == "csv":
+        csv_file = StringIO()
+        my_results = await service.get_member_result_by_user_to_csv(user_id=user_id,
+                                                                    company_id=company_id,
+                                                                    csv_file=csv_file,
+                                                                    current_user_id=current_user.user_id,)
+        response = csv_file.getvalue()
+        headers = {
+                "Content-Disposition": "attachment; filename=quiz_results.csv",
+                "Content-Type": "text/csv",
+            }
+        return Response(content=response, headers=headers)
+    result = await service.get_member_result_by_user(company_id=company_id, current_user_id=current_user.user_id, user_id=user_id)
+    return Result(result=result, message="success")
+
+
+@router.get("/{company_id}/all_users/results", response_model=Result, status_code=200, response_description="All users results")
+async def get_all_members_results(company_id: int,
+                                format: Optional[str] = "json",
+                                service: CompanyService = Depends(get_company_service),
+                                current_user: UserResponse = Depends(get_current_user)) -> Result:
+    if format == "csv":
+        csv_file = StringIO()
+        my_results = await service.get_all_members_result_to_csv(company_id=company_id,
+                                                                    csv_file=csv_file,
+                                                                    current_user_id=current_user.user_id)
+        response = csv_file.getvalue()
+        headers = {
+                "Content-Disposition": "attachment; filename=quiz_results.csv",
+                "Content-Type": "text/csv",
+            }
+        return Response(content=response, headers=headers)
+    result = await service.get_all_members_result(company_id=company_id, current_user_id=current_user.user_id)
     return Result(result=result, message="success")
 
 
 @router.get("/{company_id}/quiz/{quiz_id}/results", response_model=Result, status_code=200, response_description="Quiz results in company returned")
 async def get_results_by_quiz(company_id: int,
                             quiz_id: int,
+                            format: Optional[str] = "json",
                             service: CompanyService = Depends(get_company_service),
                             current_user: UserResponse = Depends(get_current_user)) -> Result:
+    if format == "csv":
+        csv_file = StringIO()
+        my_results = await service.get_all_results_by_quiz_to_csv(company_id=company_id,
+                                                                quiz_id=quiz_id,
+                                                                csv_file=csv_file,
+                                                                current_user_id=current_user.user_id)
+        response = csv_file.getvalue()
+        headers = {
+                "Content-Disposition": "attachment; filename=quiz_results.csv",
+                "Content-Type": "text/csv",
+            }
+        return Response(content=response, headers=headers)
     result = await service.get_all_results_by_quiz(company_id=company_id, current_user_id=current_user.user_id, quiz_id=quiz_id)
     return Result(result=result, message="success")
