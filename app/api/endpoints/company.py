@@ -8,7 +8,6 @@ from app.schemas.member import MakeAdmin
 from app.servises.quiz import QuizService, get_quiz_service
 from app.schemas.quiz_result import QuizSubmit
 from app.servises.question import QuestionService, get_question_service
-from app.db.db_settings import get_redis
 
 
 router = APIRouter()
