@@ -10,6 +10,7 @@ from fastapi.encoders import jsonable_encoder
 from app.schemas.user import Result
 from typing import List
 
+
 class QuizService:
     def __init__(self, db: Database):
         self.db = db
