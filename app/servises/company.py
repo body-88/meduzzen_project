@@ -340,13 +340,13 @@ class CompanyService:
         if result:
             result_dict = json.loads(result)
             writer = csv.writer(csv_file)
-            writer.writerow([f'user_id: {result_dict["user_id"]}',
-                            f'quiz_id: {result_dict["quiz_id"]}',
-                            f'company_id: {result_dict["company_id"]}',
-                            f'questions: {result_dict["questions"]}',
-                            f'user_answer: {result_dict["user_answer"]}',
-                            f'correct_answer: {result_dict["correct_answer"]}',
-                            f'timestamp: {result_dict["timestamp"]}'])
+            writer.writerow([f'user_id: {result_dict.get("user_id")}',
+                            f'quiz_id: {result_dict.get("quiz_id")}',
+                            f'company_id: {result_dict.get("company_id")}',
+                            f'questions: {result_dict.get("questions")}',
+                            f'user_answer: {result_dict.get("user_answer")}',
+                            f'correct_answer: {result_dict.get("correct_answer")}',
+                            f'timestamp: {result_dict.get("timestamp")}'])
         else:
             return None
     
@@ -362,13 +362,13 @@ class CompanyService:
             if result:
                 result_dict = json.loads(result)
                 results.append({
-                    'user_id': result_dict['user_id'],
-                    'quiz_id': result_dict['quiz_id'],
-                    'company_id': result_dict['company_id'],
-                    'timestamp': result_dict['timestamp'],
-                    'questions': result_dict['questions'],
-                    'user_answer': result_dict['user_answer'],
-                    'correct_answer': result_dict['correct_answer']
+                    'user_id': result_dict.get('user_id'),
+                    'quiz_id': result_dict.get('quiz_id'),
+                    'company_id': result_dict.get('company_id'),
+                    'timestamp': result_dict.get('timestamp'),
+                    'questions': result_dict.get('questions'),
+                    'user_answer': result_dict.get('user_answer'),
+                    'correct_answer': result_dict.get('correct_answer')
                 })
         return results
         
@@ -383,13 +383,13 @@ class CompanyService:
             if result:
                 result_dict = json.loads(result)
                 writer = csv.writer(csv_file)
-                writer.writerow([f'user_id: {result_dict["user_id"]}',
-                                f'quiz_id: {result_dict["quiz_id"]}',
-                                f'company_id: {result_dict["company_id"]}',
-                                f'questions: {result_dict["questions"]}',
-                                f'user_answer: {result_dict["user_answer"]}',
-                                f'correct_answer: {result_dict["correct_answer"]}',
-                                f'timestamp: {result_dict["timestamp"]}'])
+                writer.writerow([f'user_id: {result_dict.get("user_id")}',
+                                f'quiz_id: {result_dict.get("quiz_id")}',
+                                f'company_id: {result_dict.get("company_id")}',
+                                f'questions: {result_dict.get("questions")}',
+                                f'user_answer: {result_dict.get("user_answer")}',
+                                f'correct_answer: {result_dict.get("correct_answer")}',
+                                f'timestamp: {result_dict.get("timestamp")}'])
             else:
                 return None
     
@@ -406,14 +406,14 @@ class CompanyService:
             result = await self.redis.get(key)
             result_dict = json.loads(result)
             results.append({
-                "user_id": result_dict["user_id"],
-                "quiz_id": result_dict["quiz_id"],
-                "company_id": result_dict["company_id"],
-                "timestamp": result_dict["timestamp"],
-                "questions": result_dict["questions"],
-                "user_answer": result_dict["user_answer"],
-                "correct_answer": result_dict["correct_answer"]
-            })
+                    'user_id': result_dict.get('user_id'),
+                    'quiz_id': result_dict.get('quiz_id'),
+                    'company_id': result_dict.get('company_id'),
+                    'timestamp': result_dict.get('timestamp'),
+                    'questions': result_dict.get('questions'),
+                    'user_answer': result_dict.get('user_answer'),
+                    'correct_answer': result_dict.get('correct_answer')
+                })
         return results
     
     
@@ -426,13 +426,13 @@ class CompanyService:
             if result:
                 result_dict = json.loads(result)
                 writer = csv.writer(csv_file)
-                writer.writerow([f'user_id: {result_dict["user_id"]}',
-                                f'quiz_id: {result_dict["quiz_id"]}',
-                                f'company_id: {result_dict["company_id"]}',
-                                f'questions: {result_dict["questions"]}',
-                                f'user_answer: {result_dict["user_answer"]}',
-                                f'correct_answer: {result_dict["correct_answer"]}',
-                                f'timestamp: {result_dict["timestamp"]}'])
+                writer.writerow([f'user_id: {result_dict.get("user_id")}',
+                                f'quiz_id: {result_dict.get("quiz_id")}',
+                                f'company_id: {result_dict.get("company_id")}',
+                                f'questions: {result_dict.get("questions")}',
+                                f'user_answer: {result_dict.get("user_answer")}',
+                                f'correct_answer: {result_dict.get("correct_answer")}',
+                                f'timestamp: {result_dict.get("timestamp")}'])
             else:
                 return None
     
@@ -446,14 +446,14 @@ class CompanyService:
             result = await self.redis.get(key)
             result_dict = json.loads(result)
             results.append({
-                "user_id": result_dict["user_id"],
-                "quiz_id": result_dict["quiz_id"],
-                "company_id": result_dict["company_id"],
-                "timestamp": result_dict["timestamp"],
-                "questions": result_dict["questions"],
-                "user_answer": result_dict["user_answer"],
-                "correct_answer": result_dict["correct_answer"]
-            })
+                    'user_id': result_dict.get('user_id'),
+                    'quiz_id': result_dict.get('quiz_id'),
+                    'company_id': result_dict.get('company_id'),
+                    'timestamp': result_dict.get('timestamp'),
+                    'questions': result_dict.get('questions'),
+                    'user_answer': result_dict.get('user_answer'),
+                    'correct_answer': result_dict.get('correct_answer')
+                })
         return results
     
     
@@ -466,13 +466,13 @@ class CompanyService:
             if result:
                 result_dict = json.loads(result)
                 writer = csv.writer(csv_file)
-                writer.writerow([f'user_id: {result_dict["user_id"]}',
-                                f'quiz_id: {result_dict["quiz_id"]}',
-                                f'company_id: {result_dict["company_id"]}',
-                                f'questions: {result_dict["questions"]}',
-                                f'user_answer: {result_dict["user_answer"]}',
-                                f'correct_answer: {result_dict["correct_answer"]}',
-                                f'timestamp: {result_dict["timestamp"]}'])
+                writer.writerow([f'user_id: {result_dict.get("user_id")}',
+                                f'quiz_id: {result_dict.get("quiz_id")}',
+                                f'company_id: {result_dict.get("company_id")}',
+                                f'questions: {result_dict.get("questions")}',
+                                f'user_answer: {result_dict.get("user_answer")}',
+                                f'correct_answer: {result_dict.get("correct_answer")}',
+                                f'timestamp: {result_dict.get("timestamp")}'])
             else:
                 return None
     
