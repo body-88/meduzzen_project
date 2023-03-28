@@ -201,3 +201,35 @@ async def get_results_by_quiz(company_id: int,
         return Response(content=response, headers=headers)
     result = await service.get_all_results_by_quiz(company_id=company_id, current_user_id=current_user.user_id, quiz_id=quiz_id)
     return Result(result=result, message="success")
+
+
+
+@router.get("/{company_id}/average_results", response_model=Result, status_code=200)
+async def get_average_results_all_users(company_id: int,
+                            quiz_service: QuizService = Depends(get_quiz_service),
+                            current_user: UserResponse = Depends(get_current_user),
+                            company_service: CompanyService = Depends(get_company_service)
+                            ) -> Result:
+    result = await company_service.get_company_average_result_all_users(company_id=company_id, current_user_id = current_user.user_id)
+    return Result(result=result)
+
+
+@router.get("/{company_id}/average_results/{user_id}", response_model=Result, status_code=200)
+async def cget_average_results_user(company_id: int,
+                            user_id: int,
+                            quiz_service: QuizService = Depends(get_quiz_service),
+                            current_user: UserResponse = Depends(get_current_user),
+                            company_service: CompanyService = Depends(get_company_service)
+                            ) -> Result:
+    result = await company_service.get_company_average_result_user(company_id=company_id, current_user_id = current_user.user_id, user_id=user_id)
+    return Result(result=result)
+
+
+@router.get("/{company_id}/last_quiz", response_model=Result, status_code=200)
+async def get_users_last_quiz(company_id: int,
+                            quiz_service: QuizService = Depends(get_quiz_service),
+                            current_user: UserResponse = Depends(get_current_user),
+                            company_service: CompanyService = Depends(get_company_service)
+                            ) -> Result:
+    result = await company_service.get_users_last_quiz(company_id=company_id, current_user_id = current_user.user_id)
+    return Result(result=result)
