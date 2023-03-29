@@ -10,7 +10,7 @@ from typing import List, TYPE_CHECKING
 from app.schemas.user import Result
 from app.utils.constants import CompanyRole
 from app.schemas.member import MakeAdmin
-from app.schemas.quiz_result import  QuizSubmit, QuizAnaliticsResponse
+from app.schemas.quiz_result import  QuizSubmit
 from app.models.quiz_result import QuizResult
 from app.db.db_settings import get_redis, aioredis
 import datetime

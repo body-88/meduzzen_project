@@ -7,7 +7,6 @@ from app.servises.company import CompanyService, get_company_service
 from app.servises.quiz import QuizService, get_quiz_service
 from io import StringIO
 from typing import Optional
-from app.schemas.quiz_result import QuizAnaliticsResponse
 
 
 router = APIRouter()
