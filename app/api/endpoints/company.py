@@ -211,7 +211,7 @@ async def get_average_results_all_users(company_id: int,
                             company_service: CompanyService = Depends(get_company_service)
                             ) -> Result:
     result = await company_service.get_company_average_result_all_users(company_id=company_id, current_user_id = current_user.user_id)
-    return Result(result=result)
+    return Result(result=result, message="success")
 
 
 @router.get("/{company_id}/average_results/{user_id}", response_model=Result, status_code=200)
@@ -222,7 +222,7 @@ async def cget_average_results_user(company_id: int,
                             company_service: CompanyService = Depends(get_company_service)
                             ) -> Result:
     result = await company_service.get_company_average_result_user(company_id=company_id, current_user_id = current_user.user_id, user_id=user_id)
-    return Result(result=result)
+    return Result(result=result, message="success")
 
 
 @router.get("/{company_id}/last_quiz", response_model=Result, status_code=200)
@@ -232,4 +232,4 @@ async def get_users_last_quiz(company_id: int,
                             company_service: CompanyService = Depends(get_company_service)
                             ) -> Result:
     result = await company_service.get_users_last_quiz(company_id=company_id, current_user_id = current_user.user_id)
-    return Result(result=result)
+    return Result(result=result, message="success")

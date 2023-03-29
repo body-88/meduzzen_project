@@ -7,6 +7,7 @@ from app.servises.company import CompanyService, get_company_service
 from app.servises.quiz import QuizService, get_quiz_service
 from io import StringIO
 from typing import Optional
+from app.schemas.quiz_result import QuizAnaliticsResponse
 
 
 router = APIRouter()
@@ -90,22 +91,15 @@ async def get_result(company_id: int,
     return Result(result=my_results, message="success")
 
 
-@router.get("/average_results", response_model=Result, status_code=200, response_description="Average results")
+@router.get("/me/average_results", response_model=Result, status_code=200, response_description="Average results")
 async def get_average_results(current_user: UserResponse = Depends(get_current_user),
                     company_service: CompanyService = Depends(get_company_service)) -> Result:
-    system_rating = await company_service.get_user_average_results(user_id=current_user.user_id)
-    return Result(result=system_rating, message="success")
-
-
-@router.get("/me/quizzes/average_results", response_model=Result, status_code=200, response_description="Average results by quizzes")
-async def get_average_results_by_quizzes(current_user: UserResponse = Depends(get_current_user),
-                    company_service: CompanyService = Depends(get_company_service)) -> Result:
-    system_rating = await company_service.get_user_average_results_by_quizzes(user_id=current_user.user_id)
-    return Result(result=system_rating, message="success")
+    result = await company_service.get_user_average_results(user_id=current_user.user_id)
+    return Result(result=result, message="success")
 
 
 @router.get("/me/quizzes", response_model=Result, status_code=200, response_description="Get user passed quizzes")
 async def get_user_passed_quizzes(current_user: UserResponse = Depends(get_current_user),
                     company_service: CompanyService = Depends(get_company_service)) -> Result:
-    system_rating = await company_service.get_user_passed_quizzes(user_id=current_user.user_id)
-    return Result(result=system_rating, message="success")
+    result = await company_service.get_user_passed_quizzes(user_id=current_user.user_id)
+    return Result(result=result, message="success")
