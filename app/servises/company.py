@@ -475,6 +475,78 @@ class CompanyService:
                                 f'timestamp: {result_dict.get("timestamp")}'])
             else:
                 return None
+            
+            
+    async def get_user_average_results(self, user_id: int) -> Result:
+        query = select(QuizResult).where(QuizResult.user_id==user_id)
+        quiz_results = await self.db.fetch_all(query=query)
+        quiz_analytics = {}
+        for quiz_result in quiz_results:
+            quiz_id = quiz_result.quiz_id
+            if quiz_id not in quiz_analytics:
+                quiz_analytics[quiz_id] = []
+            quiz_analytics[quiz_id].append({"average_result": quiz_result.average_result, "date": quiz_result.date})
+        
+        quiz_analytics_response = []
+        for quiz_id, analytics in quiz_analytics.items():
+            quiz_analytics_response.append({"quiz_id": quiz_id, "analitics": analytics})
+        
+        return quiz_analytics_response
+        
+
+    async def get_user_passed_quizzes(self, user_id: int) -> Result:
+        sub_query = select(func.max(QuizResult.date)).where(QuizResult.user_id==user_id).group_by(QuizResult.quiz_id).subquery()
+        query = select(QuizResult.quiz_id, QuizResult.date).where((QuizResult.user_id==user_id) & (QuizResult.date.in_(sub_query)))
+        result = await self.db.fetch_all(query=query)
+        return result
+    
+    
+    async def get_company_average_result_all_users(self, company_id: int, current_user_id: int) -> Result:
+        is_owner_admin = await self.get_member_role(company_id=company_id, user_id=current_user_id)
+        query = select(QuizResult).where(QuizResult.company_id==company_id)
+        quiz_results = await self.db.fetch_all(query=query)
+        quiz_analytics = {}
+        for quiz_result in quiz_results:
+            user_id = quiz_result.user_id
+            if user_id not in quiz_analytics:
+                quiz_analytics[user_id] = []
+            quiz_analytics[user_id].append({"average_result": quiz_result.average_result, "date": quiz_result.date})
+        
+        quiz_analytics_response = []
+        for user_id, analytics in quiz_analytics.items():
+            quiz_analytics_response.append({"user_id": user_id, "analitics": analytics})
+        
+        return quiz_analytics_response
+    
+    
+    async def get_company_average_result_user(self, company_id: int, current_user_id: int, user_id: int) -> Result:
+        is_owner_admin = await self.get_member_role(company_id=company_id, user_id=current_user_id)
+        query = select(QuizResult).where((QuizResult.company_id==company_id) & (QuizResult.user_id==user_id))
+        quiz_results = await self.db.fetch_all(query=query)
+        quiz_analytics = {}
+        for quiz_result in quiz_results:
+            quiz_id = quiz_result.quiz_id
+            if quiz_id not in quiz_analytics:
+                quiz_analytics[quiz_id] = []
+            quiz_analytics[quiz_id].append({"average_result": quiz_result.average_result, "date": quiz_result.date})
+        
+        quiz_analytics_response = []
+        for quiz_id, analytics in quiz_analytics.items():
+            quiz_analytics_response.append({"quiz_id": quiz_id, "analitics": analytics})
+        
+        return quiz_analytics_response
+
+    
+    async def get_users_last_quiz(self, company_id: int, current_user_id: int) -> Result:
+        is_owner_admin = await self.get_member_role(company_id=company_id, user_id=current_user_id)
+        sub_query = select(func.max(QuizResult.date)).group_by(QuizResult.user_id).subquery()
+        query = select(QuizResult.user_id, QuizResult.date).where(
+            QuizResult.company_id == company_id, 
+            QuizResult.date.in_(sub_query)
+        )
+        result = await self.db.fetch_all(query=query)
+        return result
+    
     
 
 async def get_company_service(db: Database = Depends(get_db), redis: aioredis.Redis = Depends(get_redis)) -> CompanyService:

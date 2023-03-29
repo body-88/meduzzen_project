@@ -88,3 +88,17 @@ async def get_result(company_id: int,
                                                     quiz_id=quiz_id,
                                                     quiz_service=quiz_service)
     return Result(result=my_results, message="success")
+
+
+@router.get("/me/average_results", response_model=Result, status_code=200, response_description="Average results")
+async def get_average_results(current_user: UserResponse = Depends(get_current_user),
+                    company_service: CompanyService = Depends(get_company_service)) -> Result:
+    result = await company_service.get_user_average_results(user_id=current_user.user_id)
+    return Result(result=result, message="success")
+
+
+@router.get("/me/quizzes", response_model=Result, status_code=200, response_description="Get user passed quizzes")
+async def get_user_passed_quizzes(current_user: UserResponse = Depends(get_current_user),
+                    company_service: CompanyService = Depends(get_company_service)) -> Result:
+    result = await company_service.get_user_passed_quizzes(user_id=current_user.user_id)
+    return Result(result=result, message="success")
