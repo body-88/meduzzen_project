@@ -16,6 +16,7 @@ from app.models.members import Members
 from app.models.quiz import Quiz
 from app.models.question import Question
 from app.models.quiz_result import QuizResult
+from app.models.notifications import Notification
 
 from app.db.db_settings import DATABASE_URL
 

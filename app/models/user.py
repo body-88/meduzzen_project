@@ -24,3 +24,4 @@ class User(Base):
     requests_sent = relationship("Request", back_populates="from_user")
     members = relationship("Members", back_populates="user")
     quiz_results = relationship("QuizResult", back_populates="user")
+    notification = relationship("Notification", back_populates="user", cascade="all, delete")

@@ -23,3 +23,4 @@ class Company(Base):
     members = relationship("Members", back_populates="company")
     quizzes = relationship("Quiz", back_populates="company")
     quiz_results = relationship("QuizResult", back_populates="company")
+    notification = relationship("Notification", back_populates="company", cascade="all, delete")
