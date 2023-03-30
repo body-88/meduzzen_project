@@ -1,7 +1,7 @@
 import uvicorn
 
 from app.core.config import settings
-
+from app.main import start_scheduler
 
 def run_uvicorn_server():
     uvicorn.run(
@@ -13,3 +13,4 @@ def run_uvicorn_server():
     
 if __name__ == "__main__":
     run_uvicorn_server()
+    start_scheduler()
