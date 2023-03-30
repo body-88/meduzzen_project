@@ -9,6 +9,7 @@ from app.models.question import Question
 from fastapi.encoders import jsonable_encoder
 from app.schemas.user import Result
 from typing import List
+from app.models.notifications import Notification
 
 
 class QuizService:
@@ -47,6 +48,16 @@ class QuizService:
             
             raise HTTPException(status_code=400, detail="At least two questions are required for a quiz.")
         db_quiz.questions = questions
+        company_members = await company_service.get_members(company_id=db_quiz.company_id)
+        for member in company_members:
+            query = insert(Notification).values(
+                text = f"New quiz:{db_quiz.id} was added in company:{db_quiz.company_id}",
+                quiz_id = db_quiz.id,
+                company_id = db_quiz.company_id,
+                user_id = member.user_id,
+                status = False
+            )
+            await self.db.fetch_one(query=query)
         return db_quiz
     
     

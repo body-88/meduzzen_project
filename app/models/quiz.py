@@ -19,3 +19,4 @@ class Quiz(Base):
     questions = relationship("Question", back_populates="quiz")
     company = relationship("Company", back_populates="quizzes")
     quiz_results = relationship("QuizResult", back_populates="quiz")
+    notification = relationship("Notification", back_populates="quiz", cascade="all, delete")

@@ -2,7 +2,7 @@ from app.db.base_class import Base
 from sqlalchemy import Column, Integer, DateTime, ForeignKey, Float
 from datetime import datetime
 from sqlalchemy.sql import func
-from sqlalchemy.orm import relationship, validates
+from sqlalchemy.orm import relationship
 from app.models.question import Question
 
 
