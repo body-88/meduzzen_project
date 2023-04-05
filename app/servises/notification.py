@@ -10,19 +10,17 @@ from datetime import datetime, timedelta
 import pytz
 from typing import List
 
+
 class NotificationService:
     def __init__(self, db: Database):
         self.db = db
 
 
-    async def get_all_notifications_unread(self, current_user_id: int) -> List[Notification]:
-        query = select(Notification).where((Notification.user_id==current_user_id) & (Notification.status==False))
-        result = await self.db.fetch_all(query=query)
-        return result
-    
-    
-    async def get_all_notifications_read(self, current_user_id: int) -> List[Notification]:
-        query = select(Notification).where((Notification.user_id==current_user_id) & (Notification.status==True))
+    async def get_all_notifications(self, current_user_id: int, status: bool) -> List[Notification]:
+        if status == False:
+            query = select(Notification).where((Notification.user_id==current_user_id) & (Notification.status==status))
+            result = await self.db.fetch_all(query=query)
+        query = select(Notification).where((Notification.user_id==current_user_id) & (Notification.status==status))
         result = await self.db.fetch_all(query=query)
         return result
     
