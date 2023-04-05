@@ -49,6 +49,7 @@ pydantic==1.10.5
 PyJWT==2.6.0
 pytest==7.2.1
 pytest-asyncio==0.20.3
+pytest-env==0.8.1
 python-dotenv==0.21.1
 python-jose==3.3.0
 python-multipart==0.0.6

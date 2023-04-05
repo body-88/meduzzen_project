@@ -3,31 +3,31 @@ from app.models.notifications import Notification
 from sqlalchemy import update, select, insert
 from app.db.db_settings import get_db
 from fastapi import Depends, HTTPException
-from app.servises.user import UserService, get_user_service
-from app.servises.quiz import QuizService, get_quiz_service
-from app.servises.company import CompanyService, get_company_service
+from app.servises.user import UserService
+from app.servises.quiz import QuizService, Result
+from app.servises.company import CompanyService
 from datetime import datetime, timedelta
 import pytz
-
+from typing import List
 
 class NotificationService:
     def __init__(self, db: Database):
         self.db = db
 
 
-    async def get_all_notifications_unread(self, current_user_id: int):
+    async def get_all_notifications_unread(self, current_user_id: int) -> List[Notification]:
         query = select(Notification).where((Notification.user_id==current_user_id) & (Notification.status==False))
         result = await self.db.fetch_all(query=query)
         return result
     
     
-    async def get_all_notifications_read(self, current_user_id: int):
+    async def get_all_notifications_read(self, current_user_id: int) -> List[Notification]:
         query = select(Notification).where((Notification.user_id==current_user_id) & (Notification.status==True))
         result = await self.db.fetch_all(query=query)
         return result
     
     
-    async def get_my_notification(self, current_user_id: int, notification_id: int):
+    async def get_my_notification(self, current_user_id: int, notification_id: int) -> Notification:
         query = select(Notification).where(
             (Notification.user_id==current_user_id) & 
             (Notification.id==notification_id))
@@ -37,7 +37,7 @@ class NotificationService:
         return result
     
     
-    async def manage_notification(self, notification_id: int, current_user_id: int):
+    async def manage_notification(self, notification_id: int, current_user_id: int) -> Notification:
         db_notification = await self.get_my_notification(notification_id=notification_id, current_user_id=current_user_id)
         if db_notification.status == False:
             query = (
@@ -61,7 +61,7 @@ class NotificationService:
         return result
     
     
-    async def check_quiz_notification(self, quiz_service: QuizService = Depends(get_quiz_service), user_service: UserService = Depends(get_user_service), company_service: CompanyService = Depends(get_company_service)):
+    async def check_quiz_notification(self, quiz_service: QuizService, user_service: UserService, company_service: CompanyService) -> Result:
         db_users = await user_service.get_users()
         now = datetime.now(pytz.utc)
         for user in db_users:
@@ -82,6 +82,7 @@ class NotificationService:
                         status = False
                         )
                         await self.db.fetch_one(query=query)
+        return f"success"
 
 
 

@@ -9,6 +9,7 @@ class Settings(BaseSettings):
     POSTGRES_HOST: str
     CONTAINER_DB_PORT: str
     REDIS_URL: str
+    TEST_REDIS_URL: str
     TEST_POSTGRES_USER: str
     TEST_POSTGRES_PASSWORD: str
     TEST_POSTGRES_DB: str
@@ -20,6 +21,7 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES : int
     REFRESH_TOKEN_EXPIRE_MINUTES : int
     JWT_REFRESH_SECRET_KEY : str
+    ENVIRONMENT: str
 
         
     class Config:
