@@ -94,6 +94,9 @@ class QuizService:
 
             question_query = delete(Question).where(Question.quiz_id == quiz_id)
             await self.db.execute(query=question_query)
+            
+            notification_query = delete(Notification).where(Notification.quiz_id == quiz_id)
+            await self.db.execute(query=notification_query)
 
             query = delete(Quiz).where(Quiz.id == quiz_id)
             result = await self.db.execute(query=query)

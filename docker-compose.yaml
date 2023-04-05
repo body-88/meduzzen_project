@@ -11,7 +11,7 @@ services:
     depends_on:
       - db
       - redis
-      - test-db
+      - test_db
     restart: always
   
   db:
@@ -25,13 +25,13 @@ services:
   redis:
     image: "redis:alpine"
 
-  test-db:
+  test_db:
     image: postgres:13-alpine
     env_file: .env
     volumes:
       - test-db-data:/var/lib/postgresql/data
     ports:
-      - "${TEST_DB_PORT}:${TEST_DB_PORT}"
+      - "${TEST_DB_PORT}:${CONTAINER_DB_PORT}"
 
 volumes:
   db-data:

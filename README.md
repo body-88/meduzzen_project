@@ -10,7 +10,7 @@ Steps to setup project:
 Steps to run docker container:
 1. Create docker image `docker build -t <your docker image name> .`
 2. To run docker container use `docker run -d --name <your docker container name> -p 80:80 <your docker image name>`
-3. To run tests inside docker you can use `python -m pytest tests`
+3. To run tests inside docker you can use `docker exec -it<your docker container name> python -m pytest -s tests`
 
 
 
@@ -22,3 +22,4 @@ Steps to create and apply migrations:
 To inspect redis keys:
 1. `docker-compose exec redis redis-cli`
 2. keys *
+3. inspect testinf redis keys `docker-compose exec redis redis-cli -h redis -p 6379 -n 1`
